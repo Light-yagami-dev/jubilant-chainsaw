@@ -10,6 +10,18 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: gemini
+    description: Gemini AI chat and image operations
+  - name: tutor
+    description: AI tutor adversarial workflow
+  - name: ingest
+    description: Document ingestion
+  - name: tts
+    description: Text-to-speech
+  - name: mastery
+    description: Student mastery tracking
+  - name: revision
+    description: Spaced repetition revision queue
 paths:
   /healthz:
     get:
@@ -24,6 +36,352 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /gemini/conversations:
+    get:
+      operationId: listGeminiConversations
+      tags: [gemini]
+      summary: List all conversations
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GeminiConversation"
+    post:
+      operationId: createGeminiConversation
+      tags: [gemini]
+      summary: Create a new conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGeminiConversationBody"
+      responses:
+        "201":
+          description: Created conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiConversation"
+  /gemini/conversations/{id}:
+    get:
+      operationId: getGeminiConversation
+      tags: [gemini]
+      summary: Get conversation with messages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Conversation with messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiConversationWithMessages"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+    delete:
+      operationId: deleteGeminiConversation
+      tags: [gemini]
+      summary: Delete a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+  /gemini/conversations/{id}/messages:
+    get:
+      operationId: listGeminiMessages
+      tags: [gemini]
+      summary: List messages in a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GeminiMessage"
+    post:
+      operationId: sendGeminiMessage
+      tags: [gemini]
+      summary: Send a message and receive an AI response (SSE stream)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendGeminiMessageBody"
+      responses:
+        "200":
+          description: SSE stream of assistant response chunks
+          content:
+            text/event-stream: {}
+  /gemini/generate-image:
+    post:
+      operationId: generateGeminiImage
+      tags: [gemini]
+      summary: Generate an image from a text prompt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateGeminiImageBody"
+      responses:
+        "200":
+          description: Generated image data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateGeminiImageResponse"
+
+  /tutor/invoke:
+    post:
+      operationId: invokeTutor
+      tags: [tutor]
+      summary: Invoke the adversarial AI tutor workflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvokeTutorBody"
+      responses:
+        "200":
+          description: Tutor response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorResponse"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+
+  /ingest/pdf:
+    post:
+      operationId: uploadPdf
+      tags: [ingest]
+      summary: Upload and parse a PDF syllabus document
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                examType:
+                  type: string
+              required:
+                - file
+                - examType
+      responses:
+        "200":
+          description: Parsed PDF result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadPdfResponse"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+
+  /tts/synthesize:
+    post:
+      operationId: synthesizeSpeech
+      tags: [tts]
+      summary: Convert text to speech audio
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SynthesizeSpeechBody"
+      responses:
+        "200":
+          description: Audio data base64 encoded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SynthesizeSpeechResponse"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+
+  /mastery:
+    get:
+      operationId: getMasteryMap
+      tags: [mastery]
+      summary: Get mastery map for a student
+      parameters:
+        - name: examType
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: subject
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Mastery entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MasteryEntry"
+    post:
+      operationId: updateMastery
+      tags: [mastery]
+      summary: Update mastery score for a topic
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMasteryBody"
+      responses:
+        "200":
+          description: Updated mastery entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MasteryEntry"
+
+  /mastery/stats:
+    get:
+      operationId: getMasteryStats
+      tags: [mastery]
+      summary: Get aggregated mastery statistics
+      parameters:
+        - name: examType
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Mastery stats per subject
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MasteryStats"
+
+  /revision:
+    get:
+      operationId: getRevisionQueue
+      tags: [revision]
+      summary: Get topics due for revision
+      parameters:
+        - name: examType
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Revision queue entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RevisionEntry"
+    post:
+      operationId: addToRevisionQueue
+      tags: [revision]
+      summary: Add a topic to revision queue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddRevisionBody"
+      responses:
+        "200":
+          description: Created revision entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevisionEntry"
+
+  /revision/{id}/complete:
+    post:
+      operationId: completeRevision
+      tags: [revision]
+      summary: Mark a revision as complete and reschedule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteRevisionBody"
+      responses:
+        "200":
+          description: Updated revision entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevisionEntry"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +392,323 @@ components:
       required:
         - status
 
+    GeminiConversation:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - createdAt
+    GeminiMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        role:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - conversationId
+        - role
+        - content
+        - createdAt
+    CreateGeminiConversationBody:
+      type: object
+      properties:
+        title:
+          type: string
+      required:
+        - title
+    SendGeminiMessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+    GeminiConversationWithMessages:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/GeminiMessage"
+      required:
+        - id
+        - title
+        - createdAt
+        - messages
+    GenerateGeminiImageBody:
+      type: object
+      properties:
+        prompt:
+          type: string
+      required:
+        - prompt
+    GenerateGeminiImageResponse:
+      type: object
+      properties:
+        b64_json:
+          type: string
+        mimeType:
+          type: string
+      required:
+        - b64_json
+        - mimeType
+    GeminiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    InvokeTutorBody:
+      type: object
+      properties:
+        userInput:
+          type: string
+        targetExam:
+          type: string
+        subject:
+          type: string
+        pedagogyStyle:
+          type: string
+          enum: [hinglish, english, mnemonic]
+        studentAnswer:
+          type: string
+        questionMode:
+          type: boolean
+        conversationId:
+          type: integer
+      required:
+        - userInput
+        - targetExam
+
+    TutorResponse:
+      type: object
+      properties:
+        response:
+          type: string
+        cacheHit:
+          type: boolean
+        gradingPassed:
+          type: boolean
+        mnemonics:
+          type: array
+          items:
+            type: string
+        weakTopics:
+          type: array
+          items:
+            type: string
+        revisionSuggestions:
+          type: array
+          items:
+            type: string
+        conversationId:
+          type: integer
+        messageId:
+          type: integer
+      required:
+        - response
+        - cacheHit
+        - gradingPassed
+
+    UploadPdfResponse:
+      type: object
+      properties:
+        chunks:
+          type: integer
+        topics:
+          type: array
+          items:
+            type: string
+        message:
+          type: string
+      required:
+        - chunks
+        - topics
+        - message
+
+    SynthesizeSpeechBody:
+      type: object
+      properties:
+        text:
+          type: string
+        language:
+          type: string
+          enum: [english, hindi, hinglish]
+      required:
+        - text
+        - language
+
+    SynthesizeSpeechResponse:
+      type: object
+      properties:
+        audioBase64:
+          type: string
+        mimeType:
+          type: string
+        voice:
+          type: string
+      required:
+        - audioBase64
+        - mimeType
+        - voice
+
+    MasteryEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        topic:
+          type: string
+        subject:
+          type: string
+        examType:
+          type: string
+        score:
+          type: integer
+        lastAttempted:
+          type: string
+          format: date-time
+        attempts:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - topic
+        - subject
+        - examType
+        - score
+        - attempts
+        - createdAt
+
+    UpdateMasteryBody:
+      type: object
+      properties:
+        topic:
+          type: string
+        subject:
+          type: string
+        examType:
+          type: string
+        score:
+          type: integer
+        passed:
+          type: boolean
+      required:
+        - topic
+        - subject
+        - examType
+        - score
+        - passed
+
+    MasteryStats:
+      type: object
+      properties:
+        subject:
+          type: string
+        examType:
+          type: string
+        averageScore:
+          type: number
+        totalTopics:
+          type: integer
+        masteredTopics:
+          type: integer
+        weakTopics:
+          type: integer
+      required:
+        - subject
+        - examType
+        - averageScore
+        - totalTopics
+        - masteredTopics
+        - weakTopics
+
+    RevisionEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        topic:
+          type: string
+        subject:
+          type: string
+        examType:
+          type: string
+        score:
+          type: integer
+        nextReviewAt:
+          type: string
+          format: date-time
+        intervalDays:
+          type: integer
+        failedCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - topic
+        - subject
+        - examType
+        - score
+        - nextReviewAt
+        - intervalDays
+        - failedCount
+        - createdAt
+
+    AddRevisionBody:
+      type: object
+      properties:
+        topic:
+          type: string
+        subject:
+          type: string
+        examType:
+          type: string
+        score:
+          type: integer
+      required:
+        - topic
+        - subject
+        - examType
+        - score
+
+    CompleteRevisionBody:
+      type: object
+      properties:
+        passed:
+          type: boolean
+        score:
+          type: integer
+      required:
+        - passed
+        - score

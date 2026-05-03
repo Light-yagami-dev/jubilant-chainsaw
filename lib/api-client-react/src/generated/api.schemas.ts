@@ -8,3 +8,171 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface GeminiConversation {
+  id: number;
+  title: string;
+  createdAt: string;
+}
+
+export interface GeminiMessage {
+  id: number;
+  conversationId: number;
+  role: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface CreateGeminiConversationBody {
+  title: string;
+}
+
+export interface SendGeminiMessageBody {
+  content: string;
+}
+
+export interface GeminiConversationWithMessages {
+  id: number;
+  title: string;
+  createdAt: string;
+  messages: GeminiMessage[];
+}
+
+export interface GenerateGeminiImageBody {
+  prompt: string;
+}
+
+export interface GenerateGeminiImageResponse {
+  b64_json: string;
+  mimeType: string;
+}
+
+export interface GeminiError {
+  error: string;
+}
+
+export type InvokeTutorBodyPedagogyStyle =
+  (typeof InvokeTutorBodyPedagogyStyle)[keyof typeof InvokeTutorBodyPedagogyStyle];
+
+export const InvokeTutorBodyPedagogyStyle = {
+  hinglish: "hinglish",
+  english: "english",
+  mnemonic: "mnemonic",
+} as const;
+
+export interface InvokeTutorBody {
+  userInput: string;
+  targetExam: string;
+  subject?: string;
+  pedagogyStyle?: InvokeTutorBodyPedagogyStyle;
+  studentAnswer?: string;
+  questionMode?: boolean;
+  conversationId?: number;
+}
+
+export interface TutorResponse {
+  response: string;
+  cacheHit: boolean;
+  gradingPassed: boolean;
+  mnemonics?: string[];
+  weakTopics?: string[];
+  revisionSuggestions?: string[];
+  conversationId?: number;
+  messageId?: number;
+}
+
+export interface UploadPdfResponse {
+  chunks: number;
+  topics: string[];
+  message: string;
+}
+
+export type SynthesizeSpeechBodyLanguage =
+  (typeof SynthesizeSpeechBodyLanguage)[keyof typeof SynthesizeSpeechBodyLanguage];
+
+export const SynthesizeSpeechBodyLanguage = {
+  english: "english",
+  hindi: "hindi",
+  hinglish: "hinglish",
+} as const;
+
+export interface SynthesizeSpeechBody {
+  text: string;
+  language: SynthesizeSpeechBodyLanguage;
+}
+
+export interface SynthesizeSpeechResponse {
+  audioBase64: string;
+  mimeType: string;
+  voice: string;
+}
+
+export interface MasteryEntry {
+  id: number;
+  topic: string;
+  subject: string;
+  examType: string;
+  score: number;
+  lastAttempted?: string;
+  attempts: number;
+  createdAt: string;
+}
+
+export interface UpdateMasteryBody {
+  topic: string;
+  subject: string;
+  examType: string;
+  score: number;
+  passed: boolean;
+}
+
+export interface MasteryStats {
+  subject: string;
+  examType: string;
+  averageScore: number;
+  totalTopics: number;
+  masteredTopics: number;
+  weakTopics: number;
+}
+
+export interface RevisionEntry {
+  id: number;
+  topic: string;
+  subject: string;
+  examType: string;
+  score: number;
+  nextReviewAt: string;
+  intervalDays: number;
+  failedCount: number;
+  createdAt: string;
+}
+
+export interface AddRevisionBody {
+  topic: string;
+  subject: string;
+  examType: string;
+  score: number;
+}
+
+export interface CompleteRevisionBody {
+  passed: boolean;
+  score: number;
+}
+
+export type UploadPdfBody = {
+  file: Blob;
+  examType: string;
+};
+
+export type GetMasteryMapParams = {
+  examType?: string;
+  subject?: string;
+};
+
+export type GetMasteryStatsParams = {
+  examType?: string;
+};
+
+export type GetRevisionQueueParams = {
+  examType?: string;
+};

@@ -5,18 +5,46 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  AddRevisionBody,
+  CompleteRevisionBody,
+  CreateGeminiConversationBody,
+  GeminiConversation,
+  GeminiConversationWithMessages,
+  GeminiError,
+  GeminiMessage,
+  GenerateGeminiImageBody,
+  GenerateGeminiImageResponse,
+  GetMasteryMapParams,
+  GetMasteryStatsParams,
+  GetRevisionQueueParams,
+  HealthStatus,
+  InvokeTutorBody,
+  MasteryEntry,
+  MasteryStats,
+  RevisionEntry,
+  SendGeminiMessageBody,
+  SynthesizeSpeechBody,
+  SynthesizeSpeechResponse,
+  TutorResponse,
+  UpdateMasteryBody,
+  UploadPdfBody,
+  UploadPdfResponse,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +127,1406 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary List all conversations
+ */
+export const getListGeminiConversationsUrl = () => {
+  return `/api/gemini/conversations`;
+};
+
+export const listGeminiConversations = async (
+  options?: RequestInit,
+): Promise<GeminiConversation[]> => {
+  return customFetch<GeminiConversation[]>(getListGeminiConversationsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListGeminiConversationsQueryKey = () => {
+  return [`/api/gemini/conversations`] as const;
+};
+
+export const getListGeminiConversationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listGeminiConversations>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listGeminiConversations>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListGeminiConversationsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listGeminiConversations>>
+  > = ({ signal }) => listGeminiConversations({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listGeminiConversations>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListGeminiConversationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listGeminiConversations>>
+>;
+export type ListGeminiConversationsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all conversations
+ */
+
+export function useListGeminiConversations<
+  TData = Awaited<ReturnType<typeof listGeminiConversations>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listGeminiConversations>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListGeminiConversationsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a new conversation
+ */
+export const getCreateGeminiConversationUrl = () => {
+  return `/api/gemini/conversations`;
+};
+
+export const createGeminiConversation = async (
+  createGeminiConversationBody: CreateGeminiConversationBody,
+  options?: RequestInit,
+): Promise<GeminiConversation> => {
+  return customFetch<GeminiConversation>(getCreateGeminiConversationUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createGeminiConversationBody),
+  });
+};
+
+export const getCreateGeminiConversationMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createGeminiConversation>>,
+    TError,
+    { data: BodyType<CreateGeminiConversationBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createGeminiConversation>>,
+  TError,
+  { data: BodyType<CreateGeminiConversationBody> },
+  TContext
+> => {
+  const mutationKey = ["createGeminiConversation"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createGeminiConversation>>,
+    { data: BodyType<CreateGeminiConversationBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createGeminiConversation(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateGeminiConversationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createGeminiConversation>>
+>;
+export type CreateGeminiConversationMutationBody =
+  BodyType<CreateGeminiConversationBody>;
+export type CreateGeminiConversationMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a new conversation
+ */
+export const useCreateGeminiConversation = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createGeminiConversation>>,
+    TError,
+    { data: BodyType<CreateGeminiConversationBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createGeminiConversation>>,
+  TError,
+  { data: BodyType<CreateGeminiConversationBody> },
+  TContext
+> => {
+  return useMutation(getCreateGeminiConversationMutationOptions(options));
+};
+
+/**
+ * @summary Get conversation with messages
+ */
+export const getGetGeminiConversationUrl = (id: number) => {
+  return `/api/gemini/conversations/${id}`;
+};
+
+export const getGeminiConversation = async (
+  id: number,
+  options?: RequestInit,
+): Promise<GeminiConversationWithMessages> => {
+  return customFetch<GeminiConversationWithMessages>(
+    getGetGeminiConversationUrl(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetGeminiConversationQueryKey = (id: number) => {
+  return [`/api/gemini/conversations/${id}`] as const;
+};
+
+export const getGetGeminiConversationQueryOptions = <
+  TData = Awaited<ReturnType<typeof getGeminiConversation>>,
+  TError = ErrorType<GeminiError>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getGeminiConversation>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetGeminiConversationQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getGeminiConversation>>
+  > = ({ signal }) => getGeminiConversation(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getGeminiConversation>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetGeminiConversationQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getGeminiConversation>>
+>;
+export type GetGeminiConversationQueryError = ErrorType<GeminiError>;
+
+/**
+ * @summary Get conversation with messages
+ */
+
+export function useGetGeminiConversation<
+  TData = Awaited<ReturnType<typeof getGeminiConversation>>,
+  TError = ErrorType<GeminiError>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getGeminiConversation>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetGeminiConversationQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Delete a conversation
+ */
+export const getDeleteGeminiConversationUrl = (id: number) => {
+  return `/api/gemini/conversations/${id}`;
+};
+
+export const deleteGeminiConversation = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteGeminiConversationUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteGeminiConversationMutationOptions = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteGeminiConversation>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteGeminiConversation>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteGeminiConversation"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteGeminiConversation>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteGeminiConversation(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteGeminiConversationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteGeminiConversation>>
+>;
+
+export type DeleteGeminiConversationMutationError = ErrorType<GeminiError>;
+
+/**
+ * @summary Delete a conversation
+ */
+export const useDeleteGeminiConversation = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteGeminiConversation>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteGeminiConversation>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteGeminiConversationMutationOptions(options));
+};
+
+/**
+ * @summary List messages in a conversation
+ */
+export const getListGeminiMessagesUrl = (id: number) => {
+  return `/api/gemini/conversations/${id}/messages`;
+};
+
+export const listGeminiMessages = async (
+  id: number,
+  options?: RequestInit,
+): Promise<GeminiMessage[]> => {
+  return customFetch<GeminiMessage[]>(getListGeminiMessagesUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListGeminiMessagesQueryKey = (id: number) => {
+  return [`/api/gemini/conversations/${id}/messages`] as const;
+};
+
+export const getListGeminiMessagesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listGeminiMessages>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listGeminiMessages>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListGeminiMessagesQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listGeminiMessages>>
+  > = ({ signal }) => listGeminiMessages(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listGeminiMessages>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListGeminiMessagesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listGeminiMessages>>
+>;
+export type ListGeminiMessagesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List messages in a conversation
+ */
+
+export function useListGeminiMessages<
+  TData = Awaited<ReturnType<typeof listGeminiMessages>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listGeminiMessages>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListGeminiMessagesQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Send a message and receive an AI response (SSE stream)
+ */
+export const getSendGeminiMessageUrl = (id: number) => {
+  return `/api/gemini/conversations/${id}/messages`;
+};
+
+export const sendGeminiMessage = async (
+  id: number,
+  sendGeminiMessageBody: SendGeminiMessageBody,
+  options?: RequestInit,
+): Promise<unknown> => {
+  return customFetch<unknown>(getSendGeminiMessageUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(sendGeminiMessageBody),
+  });
+};
+
+export const getSendGeminiMessageMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendGeminiMessage>>,
+    TError,
+    { id: number; data: BodyType<SendGeminiMessageBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sendGeminiMessage>>,
+  TError,
+  { id: number; data: BodyType<SendGeminiMessageBody> },
+  TContext
+> => {
+  const mutationKey = ["sendGeminiMessage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sendGeminiMessage>>,
+    { id: number; data: BodyType<SendGeminiMessageBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return sendGeminiMessage(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SendGeminiMessageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sendGeminiMessage>>
+>;
+export type SendGeminiMessageMutationBody = BodyType<SendGeminiMessageBody>;
+export type SendGeminiMessageMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Send a message and receive an AI response (SSE stream)
+ */
+export const useSendGeminiMessage = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendGeminiMessage>>,
+    TError,
+    { id: number; data: BodyType<SendGeminiMessageBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof sendGeminiMessage>>,
+  TError,
+  { id: number; data: BodyType<SendGeminiMessageBody> },
+  TContext
+> => {
+  return useMutation(getSendGeminiMessageMutationOptions(options));
+};
+
+/**
+ * @summary Generate an image from a text prompt
+ */
+export const getGenerateGeminiImageUrl = () => {
+  return `/api/gemini/generate-image`;
+};
+
+export const generateGeminiImage = async (
+  generateGeminiImageBody: GenerateGeminiImageBody,
+  options?: RequestInit,
+): Promise<GenerateGeminiImageResponse> => {
+  return customFetch<GenerateGeminiImageResponse>(getGenerateGeminiImageUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(generateGeminiImageBody),
+  });
+};
+
+export const getGenerateGeminiImageMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateGeminiImage>>,
+    TError,
+    { data: BodyType<GenerateGeminiImageBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateGeminiImage>>,
+  TError,
+  { data: BodyType<GenerateGeminiImageBody> },
+  TContext
+> => {
+  const mutationKey = ["generateGeminiImage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateGeminiImage>>,
+    { data: BodyType<GenerateGeminiImageBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateGeminiImage(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateGeminiImageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateGeminiImage>>
+>;
+export type GenerateGeminiImageMutationBody = BodyType<GenerateGeminiImageBody>;
+export type GenerateGeminiImageMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Generate an image from a text prompt
+ */
+export const useGenerateGeminiImage = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateGeminiImage>>,
+    TError,
+    { data: BodyType<GenerateGeminiImageBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateGeminiImage>>,
+  TError,
+  { data: BodyType<GenerateGeminiImageBody> },
+  TContext
+> => {
+  return useMutation(getGenerateGeminiImageMutationOptions(options));
+};
+
+/**
+ * @summary Invoke the adversarial AI tutor workflow
+ */
+export const getInvokeTutorUrl = () => {
+  return `/api/tutor/invoke`;
+};
+
+export const invokeTutor = async (
+  invokeTutorBody: InvokeTutorBody,
+  options?: RequestInit,
+): Promise<TutorResponse> => {
+  return customFetch<TutorResponse>(getInvokeTutorUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(invokeTutorBody),
+  });
+};
+
+export const getInvokeTutorMutationOptions = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof invokeTutor>>,
+    TError,
+    { data: BodyType<InvokeTutorBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof invokeTutor>>,
+  TError,
+  { data: BodyType<InvokeTutorBody> },
+  TContext
+> => {
+  const mutationKey = ["invokeTutor"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof invokeTutor>>,
+    { data: BodyType<InvokeTutorBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return invokeTutor(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type InvokeTutorMutationResult = NonNullable<
+  Awaited<ReturnType<typeof invokeTutor>>
+>;
+export type InvokeTutorMutationBody = BodyType<InvokeTutorBody>;
+export type InvokeTutorMutationError = ErrorType<GeminiError>;
+
+/**
+ * @summary Invoke the adversarial AI tutor workflow
+ */
+export const useInvokeTutor = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof invokeTutor>>,
+    TError,
+    { data: BodyType<InvokeTutorBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof invokeTutor>>,
+  TError,
+  { data: BodyType<InvokeTutorBody> },
+  TContext
+> => {
+  return useMutation(getInvokeTutorMutationOptions(options));
+};
+
+/**
+ * @summary Upload and parse a PDF syllabus document
+ */
+export const getUploadPdfUrl = () => {
+  return `/api/ingest/pdf`;
+};
+
+export const uploadPdf = async (
+  uploadPdfBody: UploadPdfBody,
+  options?: RequestInit,
+): Promise<UploadPdfResponse> => {
+  const formData = new FormData();
+  formData.append(`file`, uploadPdfBody.file);
+  formData.append(`examType`, uploadPdfBody.examType);
+
+  return customFetch<UploadPdfResponse>(getUploadPdfUrl(), {
+    ...options,
+    method: "POST",
+    body: formData,
+  });
+};
+
+export const getUploadPdfMutationOptions = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadPdf>>,
+    TError,
+    { data: BodyType<UploadPdfBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof uploadPdf>>,
+  TError,
+  { data: BodyType<UploadPdfBody> },
+  TContext
+> => {
+  const mutationKey = ["uploadPdf"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof uploadPdf>>,
+    { data: BodyType<UploadPdfBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return uploadPdf(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UploadPdfMutationResult = NonNullable<
+  Awaited<ReturnType<typeof uploadPdf>>
+>;
+export type UploadPdfMutationBody = BodyType<UploadPdfBody>;
+export type UploadPdfMutationError = ErrorType<GeminiError>;
+
+/**
+ * @summary Upload and parse a PDF syllabus document
+ */
+export const useUploadPdf = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadPdf>>,
+    TError,
+    { data: BodyType<UploadPdfBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof uploadPdf>>,
+  TError,
+  { data: BodyType<UploadPdfBody> },
+  TContext
+> => {
+  return useMutation(getUploadPdfMutationOptions(options));
+};
+
+/**
+ * @summary Convert text to speech audio
+ */
+export const getSynthesizeSpeechUrl = () => {
+  return `/api/tts/synthesize`;
+};
+
+export const synthesizeSpeech = async (
+  synthesizeSpeechBody: SynthesizeSpeechBody,
+  options?: RequestInit,
+): Promise<SynthesizeSpeechResponse> => {
+  return customFetch<SynthesizeSpeechResponse>(getSynthesizeSpeechUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(synthesizeSpeechBody),
+  });
+};
+
+export const getSynthesizeSpeechMutationOptions = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof synthesizeSpeech>>,
+    TError,
+    { data: BodyType<SynthesizeSpeechBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof synthesizeSpeech>>,
+  TError,
+  { data: BodyType<SynthesizeSpeechBody> },
+  TContext
+> => {
+  const mutationKey = ["synthesizeSpeech"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof synthesizeSpeech>>,
+    { data: BodyType<SynthesizeSpeechBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return synthesizeSpeech(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SynthesizeSpeechMutationResult = NonNullable<
+  Awaited<ReturnType<typeof synthesizeSpeech>>
+>;
+export type SynthesizeSpeechMutationBody = BodyType<SynthesizeSpeechBody>;
+export type SynthesizeSpeechMutationError = ErrorType<GeminiError>;
+
+/**
+ * @summary Convert text to speech audio
+ */
+export const useSynthesizeSpeech = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof synthesizeSpeech>>,
+    TError,
+    { data: BodyType<SynthesizeSpeechBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof synthesizeSpeech>>,
+  TError,
+  { data: BodyType<SynthesizeSpeechBody> },
+  TContext
+> => {
+  return useMutation(getSynthesizeSpeechMutationOptions(options));
+};
+
+/**
+ * @summary Get mastery map for a student
+ */
+export const getGetMasteryMapUrl = (params?: GetMasteryMapParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/mastery?${stringifiedParams}`
+    : `/api/mastery`;
+};
+
+export const getMasteryMap = async (
+  params?: GetMasteryMapParams,
+  options?: RequestInit,
+): Promise<MasteryEntry[]> => {
+  return customFetch<MasteryEntry[]>(getGetMasteryMapUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMasteryMapQueryKey = (params?: GetMasteryMapParams) => {
+  return [`/api/mastery`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetMasteryMapQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMasteryMap>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetMasteryMapParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMasteryMap>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMasteryMapQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMasteryMap>>> = ({
+    signal,
+  }) => getMasteryMap(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMasteryMap>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMasteryMapQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMasteryMap>>
+>;
+export type GetMasteryMapQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get mastery map for a student
+ */
+
+export function useGetMasteryMap<
+  TData = Awaited<ReturnType<typeof getMasteryMap>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetMasteryMapParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMasteryMap>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMasteryMapQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update mastery score for a topic
+ */
+export const getUpdateMasteryUrl = () => {
+  return `/api/mastery`;
+};
+
+export const updateMastery = async (
+  updateMasteryBody: UpdateMasteryBody,
+  options?: RequestInit,
+): Promise<MasteryEntry> => {
+  return customFetch<MasteryEntry>(getUpdateMasteryUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateMasteryBody),
+  });
+};
+
+export const getUpdateMasteryMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMastery>>,
+    TError,
+    { data: BodyType<UpdateMasteryBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateMastery>>,
+  TError,
+  { data: BodyType<UpdateMasteryBody> },
+  TContext
+> => {
+  const mutationKey = ["updateMastery"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateMastery>>,
+    { data: BodyType<UpdateMasteryBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return updateMastery(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMasteryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateMastery>>
+>;
+export type UpdateMasteryMutationBody = BodyType<UpdateMasteryBody>;
+export type UpdateMasteryMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update mastery score for a topic
+ */
+export const useUpdateMastery = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMastery>>,
+    TError,
+    { data: BodyType<UpdateMasteryBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateMastery>>,
+  TError,
+  { data: BodyType<UpdateMasteryBody> },
+  TContext
+> => {
+  return useMutation(getUpdateMasteryMutationOptions(options));
+};
+
+/**
+ * @summary Get aggregated mastery statistics
+ */
+export const getGetMasteryStatsUrl = (params?: GetMasteryStatsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/mastery/stats?${stringifiedParams}`
+    : `/api/mastery/stats`;
+};
+
+export const getMasteryStats = async (
+  params?: GetMasteryStatsParams,
+  options?: RequestInit,
+): Promise<MasteryStats[]> => {
+  return customFetch<MasteryStats[]>(getGetMasteryStatsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMasteryStatsQueryKey = (params?: GetMasteryStatsParams) => {
+  return [`/api/mastery/stats`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetMasteryStatsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMasteryStats>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetMasteryStatsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMasteryStats>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMasteryStatsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMasteryStats>>> = ({
+    signal,
+  }) => getMasteryStats(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMasteryStats>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMasteryStatsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMasteryStats>>
+>;
+export type GetMasteryStatsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get aggregated mastery statistics
+ */
+
+export function useGetMasteryStats<
+  TData = Awaited<ReturnType<typeof getMasteryStats>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetMasteryStatsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMasteryStats>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMasteryStatsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get topics due for revision
+ */
+export const getGetRevisionQueueUrl = (params?: GetRevisionQueueParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/revision?${stringifiedParams}`
+    : `/api/revision`;
+};
+
+export const getRevisionQueue = async (
+  params?: GetRevisionQueueParams,
+  options?: RequestInit,
+): Promise<RevisionEntry[]> => {
+  return customFetch<RevisionEntry[]>(getGetRevisionQueueUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetRevisionQueueQueryKey = (
+  params?: GetRevisionQueueParams,
+) => {
+  return [`/api/revision`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetRevisionQueueQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRevisionQueue>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetRevisionQueueParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getRevisionQueue>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetRevisionQueueQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getRevisionQueue>>
+  > = ({ signal }) => getRevisionQueue(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRevisionQueue>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetRevisionQueueQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getRevisionQueue>>
+>;
+export type GetRevisionQueueQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get topics due for revision
+ */
+
+export function useGetRevisionQueue<
+  TData = Awaited<ReturnType<typeof getRevisionQueue>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetRevisionQueueParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getRevisionQueue>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetRevisionQueueQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Add a topic to revision queue
+ */
+export const getAddToRevisionQueueUrl = () => {
+  return `/api/revision`;
+};
+
+export const addToRevisionQueue = async (
+  addRevisionBody: AddRevisionBody,
+  options?: RequestInit,
+): Promise<RevisionEntry> => {
+  return customFetch<RevisionEntry>(getAddToRevisionQueueUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(addRevisionBody),
+  });
+};
+
+export const getAddToRevisionQueueMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addToRevisionQueue>>,
+    TError,
+    { data: BodyType<AddRevisionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof addToRevisionQueue>>,
+  TError,
+  { data: BodyType<AddRevisionBody> },
+  TContext
+> => {
+  const mutationKey = ["addToRevisionQueue"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof addToRevisionQueue>>,
+    { data: BodyType<AddRevisionBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return addToRevisionQueue(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddToRevisionQueueMutationResult = NonNullable<
+  Awaited<ReturnType<typeof addToRevisionQueue>>
+>;
+export type AddToRevisionQueueMutationBody = BodyType<AddRevisionBody>;
+export type AddToRevisionQueueMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Add a topic to revision queue
+ */
+export const useAddToRevisionQueue = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addToRevisionQueue>>,
+    TError,
+    { data: BodyType<AddRevisionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof addToRevisionQueue>>,
+  TError,
+  { data: BodyType<AddRevisionBody> },
+  TContext
+> => {
+  return useMutation(getAddToRevisionQueueMutationOptions(options));
+};
+
+/**
+ * @summary Mark a revision as complete and reschedule
+ */
+export const getCompleteRevisionUrl = (id: number) => {
+  return `/api/revision/${id}/complete`;
+};
+
+export const completeRevision = async (
+  id: number,
+  completeRevisionBody: CompleteRevisionBody,
+  options?: RequestInit,
+): Promise<RevisionEntry> => {
+  return customFetch<RevisionEntry>(getCompleteRevisionUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(completeRevisionBody),
+  });
+};
+
+export const getCompleteRevisionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof completeRevision>>,
+    TError,
+    { id: number; data: BodyType<CompleteRevisionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof completeRevision>>,
+  TError,
+  { id: number; data: BodyType<CompleteRevisionBody> },
+  TContext
+> => {
+  const mutationKey = ["completeRevision"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof completeRevision>>,
+    { id: number; data: BodyType<CompleteRevisionBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return completeRevision(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CompleteRevisionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof completeRevision>>
+>;
+export type CompleteRevisionMutationBody = BodyType<CompleteRevisionBody>;
+export type CompleteRevisionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Mark a revision as complete and reschedule
+ */
+export const useCompleteRevision = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof completeRevision>>,
+    TError,
+    { id: number; data: BodyType<CompleteRevisionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof completeRevision>>,
+  TError,
+  { id: number; data: BodyType<CompleteRevisionBody> },
+  TContext
+> => {
+  return useMutation(getCompleteRevisionMutationOptions(options));
+};

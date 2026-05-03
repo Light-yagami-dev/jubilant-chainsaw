@@ -14,3 +14,269 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary List all conversations
+ */
+export const ListGeminiConversationsResponseItem = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+export const ListGeminiConversationsResponse = zod.array(
+  ListGeminiConversationsResponseItem,
+);
+
+/**
+ * @summary Create a new conversation
+ */
+export const CreateGeminiConversationBody = zod.object({
+  title: zod.string(),
+});
+
+/**
+ * @summary Get conversation with messages
+ */
+export const GetGeminiConversationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetGeminiConversationResponse = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  createdAt: zod.coerce.date(),
+  messages: zod.array(
+    zod.object({
+      id: zod.number(),
+      conversationId: zod.number(),
+      role: zod.string(),
+      content: zod.string(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Delete a conversation
+ */
+export const DeleteGeminiConversationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary List messages in a conversation
+ */
+export const ListGeminiMessagesParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListGeminiMessagesResponseItem = zod.object({
+  id: zod.number(),
+  conversationId: zod.number(),
+  role: zod.string(),
+  content: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+export const ListGeminiMessagesResponse = zod.array(
+  ListGeminiMessagesResponseItem,
+);
+
+/**
+ * @summary Send a message and receive an AI response (SSE stream)
+ */
+export const SendGeminiMessageParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const SendGeminiMessageBody = zod.object({
+  content: zod.string(),
+});
+
+/**
+ * @summary Generate an image from a text prompt
+ */
+export const GenerateGeminiImageBody = zod.object({
+  prompt: zod.string(),
+});
+
+export const GenerateGeminiImageResponse = zod.object({
+  b64_json: zod.string(),
+  mimeType: zod.string(),
+});
+
+/**
+ * @summary Invoke the adversarial AI tutor workflow
+ */
+export const InvokeTutorBody = zod.object({
+  userInput: zod.string(),
+  targetExam: zod.string(),
+  subject: zod.string().optional(),
+  pedagogyStyle: zod.enum(["hinglish", "english", "mnemonic"]).optional(),
+  studentAnswer: zod.string().optional(),
+  questionMode: zod.boolean().optional(),
+  conversationId: zod.number().optional(),
+});
+
+export const InvokeTutorResponse = zod.object({
+  response: zod.string(),
+  cacheHit: zod.boolean(),
+  gradingPassed: zod.boolean(),
+  mnemonics: zod.array(zod.string()).optional(),
+  weakTopics: zod.array(zod.string()).optional(),
+  revisionSuggestions: zod.array(zod.string()).optional(),
+  conversationId: zod.number().optional(),
+  messageId: zod.number().optional(),
+});
+
+/**
+ * @summary Upload and parse a PDF syllabus document
+ */
+export const UploadPdfBody = zod.object({
+  file: zod.instanceof(File),
+  examType: zod.string(),
+});
+
+export const UploadPdfResponse = zod.object({
+  chunks: zod.number(),
+  topics: zod.array(zod.string()),
+  message: zod.string(),
+});
+
+/**
+ * @summary Convert text to speech audio
+ */
+export const SynthesizeSpeechBody = zod.object({
+  text: zod.string(),
+  language: zod.enum(["english", "hindi", "hinglish"]),
+});
+
+export const SynthesizeSpeechResponse = zod.object({
+  audioBase64: zod.string(),
+  mimeType: zod.string(),
+  voice: zod.string(),
+});
+
+/**
+ * @summary Get mastery map for a student
+ */
+export const GetMasteryMapQueryParams = zod.object({
+  examType: zod.coerce.string().optional(),
+  subject: zod.coerce.string().optional(),
+});
+
+export const GetMasteryMapResponseItem = zod.object({
+  id: zod.number(),
+  topic: zod.string(),
+  subject: zod.string(),
+  examType: zod.string(),
+  score: zod.number(),
+  lastAttempted: zod.coerce.date().optional(),
+  attempts: zod.number(),
+  createdAt: zod.coerce.date(),
+});
+export const GetMasteryMapResponse = zod.array(GetMasteryMapResponseItem);
+
+/**
+ * @summary Update mastery score for a topic
+ */
+export const UpdateMasteryBody = zod.object({
+  topic: zod.string(),
+  subject: zod.string(),
+  examType: zod.string(),
+  score: zod.number(),
+  passed: zod.boolean(),
+});
+
+export const UpdateMasteryResponse = zod.object({
+  id: zod.number(),
+  topic: zod.string(),
+  subject: zod.string(),
+  examType: zod.string(),
+  score: zod.number(),
+  lastAttempted: zod.coerce.date().optional(),
+  attempts: zod.number(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Get aggregated mastery statistics
+ */
+export const GetMasteryStatsQueryParams = zod.object({
+  examType: zod.coerce.string().optional(),
+});
+
+export const GetMasteryStatsResponseItem = zod.object({
+  subject: zod.string(),
+  examType: zod.string(),
+  averageScore: zod.number(),
+  totalTopics: zod.number(),
+  masteredTopics: zod.number(),
+  weakTopics: zod.number(),
+});
+export const GetMasteryStatsResponse = zod.array(GetMasteryStatsResponseItem);
+
+/**
+ * @summary Get topics due for revision
+ */
+export const GetRevisionQueueQueryParams = zod.object({
+  examType: zod.coerce.string().optional(),
+});
+
+export const GetRevisionQueueResponseItem = zod.object({
+  id: zod.number(),
+  topic: zod.string(),
+  subject: zod.string(),
+  examType: zod.string(),
+  score: zod.number(),
+  nextReviewAt: zod.coerce.date(),
+  intervalDays: zod.number(),
+  failedCount: zod.number(),
+  createdAt: zod.coerce.date(),
+});
+export const GetRevisionQueueResponse = zod.array(GetRevisionQueueResponseItem);
+
+/**
+ * @summary Add a topic to revision queue
+ */
+export const AddToRevisionQueueBody = zod.object({
+  topic: zod.string(),
+  subject: zod.string(),
+  examType: zod.string(),
+  score: zod.number(),
+});
+
+export const AddToRevisionQueueResponse = zod.object({
+  id: zod.number(),
+  topic: zod.string(),
+  subject: zod.string(),
+  examType: zod.string(),
+  score: zod.number(),
+  nextReviewAt: zod.coerce.date(),
+  intervalDays: zod.number(),
+  failedCount: zod.number(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Mark a revision as complete and reschedule
+ */
+export const CompleteRevisionParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const CompleteRevisionBody = zod.object({
+  passed: zod.boolean(),
+  score: zod.number(),
+});
+
+export const CompleteRevisionResponse = zod.object({
+  id: zod.number(),
+  topic: zod.string(),
+  subject: zod.string(),
+  examType: zod.string(),
+  score: zod.number(),
+  nextReviewAt: zod.coerce.date(),
+  intervalDays: zod.number(),
+  failedCount: zod.number(),
+  createdAt: zod.coerce.date(),
+});
