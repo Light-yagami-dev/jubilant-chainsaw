@@ -58,6 +58,9 @@ export const InvokeTutorBodyPedagogyStyle = {
   hinglish: "hinglish",
   english: "english",
   mnemonic: "mnemonic",
+  simplified: "simplified",
+  standard: "standard",
+  abstract: "abstract",
 } as const;
 
 export interface InvokeTutorBody {
@@ -156,6 +159,30 @@ export interface AddRevisionBody {
 
 export interface CompleteRevisionBody {
   passed: boolean;
+  score: number;
+}
+
+export interface GeneratePracticeBody {
+  context: string;
+  targetExam: string;
+  language?: string;
+  model?: string;
+}
+
+export interface PracticeResponse {
+  questions: string;
+}
+
+export interface RunDiagnosticBody {
+  studentAnswer: string;
+  reference: string;
+  targetExam: string;
+  language?: string;
+  model?: string;
+}
+
+export interface DiagnosticResponse {
+  evaluation: string;
   score: number;
 }
 

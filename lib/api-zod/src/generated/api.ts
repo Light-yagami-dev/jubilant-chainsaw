@@ -105,13 +105,52 @@ export const GenerateGeminiImageResponse = zod.object({
 });
 
 /**
+ * @summary Generate practice questions from tutor response context
+ */
+export const GeneratePracticeBody = zod.object({
+  context: zod.string(),
+  targetExam: zod.string(),
+  language: zod.string().optional(),
+  model: zod.string().optional(),
+});
+
+export const GeneratePracticeResponse = zod.object({
+  questions: zod.string(),
+});
+
+/**
+ * @summary Run trace-back diagnostic evaluation on a student's answer
+ */
+export const RunDiagnosticBody = zod.object({
+  studentAnswer: zod.string(),
+  reference: zod.string(),
+  targetExam: zod.string(),
+  language: zod.string().optional(),
+  model: zod.string().optional(),
+});
+
+export const RunDiagnosticResponse = zod.object({
+  evaluation: zod.string(),
+  score: zod.number(),
+});
+
+/**
  * @summary Invoke the adversarial AI tutor workflow
  */
 export const InvokeTutorBody = zod.object({
   userInput: zod.string(),
   targetExam: zod.string(),
   subject: zod.string().optional(),
-  pedagogyStyle: zod.enum(["hinglish", "english", "mnemonic"]).optional(),
+  pedagogyStyle: zod
+    .enum([
+      "hinglish",
+      "english",
+      "mnemonic",
+      "simplified",
+      "standard",
+      "abstract",
+    ])
+    .optional(),
   studentAnswer: zod.string().optional(),
   questionMode: zod.boolean().optional(),
   conversationId: zod.number().optional(),
@@ -132,7 +171,7 @@ export const InvokeTutorResponse = zod.object({
  * @summary Upload and parse a PDF syllabus document
  */
 export const UploadPdfBody = zod.object({
-  file: zod.instanceof(File),
+  file: zod.any(),
   examType: zod.string(),
 });
 

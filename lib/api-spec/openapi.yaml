@@ -171,6 +171,56 @@ paths:
               schema:
                 $ref: "#/components/schemas/GenerateGeminiImageResponse"
 
+  /tutor/practice:
+    post:
+      operationId: generatePractice
+      tags: [tutor]
+      summary: Generate practice questions from tutor response context
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GeneratePracticeBody"
+      responses:
+        "200":
+          description: Practice questions output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PracticeResponse"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+
+  /tutor/diagnostic:
+    post:
+      operationId: runDiagnostic
+      tags: [tutor]
+      summary: Run trace-back diagnostic evaluation on a student's answer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunDiagnosticBody"
+      responses:
+        "200":
+          description: Diagnostic evaluation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiagnosticResponse"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+
   /tutor/invoke:
     post:
       operationId: invokeTutor
@@ -495,7 +545,7 @@ components:
           type: string
         pedagogyStyle:
           type: string
-          enum: [hinglish, english, mnemonic]
+          enum: [hinglish, english, mnemonic, simplified, standard, abstract]
         studentAnswer:
           type: string
         questionMode:
@@ -711,4 +761,56 @@ components:
           type: integer
       required:
         - passed
+        - score
+
+    GeneratePracticeBody:
+      type: object
+      properties:
+        context:
+          type: string
+        targetExam:
+          type: string
+        language:
+          type: string
+        model:
+          type: string
+      required:
+        - context
+        - targetExam
+
+    PracticeResponse:
+      type: object
+      properties:
+        questions:
+          type: string
+      required:
+        - questions
+
+    RunDiagnosticBody:
+      type: object
+      properties:
+        studentAnswer:
+          type: string
+        reference:
+          type: string
+        targetExam:
+          type: string
+        language:
+          type: string
+        model:
+          type: string
+      required:
+        - studentAnswer
+        - reference
+        - targetExam
+
+    DiagnosticResponse:
+      type: object
+      properties:
+        evaluation:
+          type: string
+        score:
+          type: number
+      required:
+        - evaluation
         - score

@@ -20,12 +20,14 @@ import type {
   AddRevisionBody,
   CompleteRevisionBody,
   CreateGeminiConversationBody,
+  DiagnosticResponse,
   GeminiConversation,
   GeminiConversationWithMessages,
   GeminiError,
   GeminiMessage,
   GenerateGeminiImageBody,
   GenerateGeminiImageResponse,
+  GeneratePracticeBody,
   GetMasteryMapParams,
   GetMasteryStatsParams,
   GetRevisionQueueParams,
@@ -33,7 +35,9 @@ import type {
   InvokeTutorBody,
   MasteryEntry,
   MasteryStats,
+  PracticeResponse,
   RevisionEntry,
+  RunDiagnosticBody,
   SendGeminiMessageBody,
   SynthesizeSpeechBody,
   SynthesizeSpeechResponse,
@@ -724,6 +728,178 @@ export const useGenerateGeminiImage = <
   TContext
 > => {
   return useMutation(getGenerateGeminiImageMutationOptions(options));
+};
+
+/**
+ * @summary Generate practice questions from tutor response context
+ */
+export const getGeneratePracticeUrl = () => {
+  return `/api/tutor/practice`;
+};
+
+export const generatePractice = async (
+  generatePracticeBody: GeneratePracticeBody,
+  options?: RequestInit,
+): Promise<PracticeResponse> => {
+  return customFetch<PracticeResponse>(getGeneratePracticeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(generatePracticeBody),
+  });
+};
+
+export const getGeneratePracticeMutationOptions = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generatePractice>>,
+    TError,
+    { data: BodyType<GeneratePracticeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generatePractice>>,
+  TError,
+  { data: BodyType<GeneratePracticeBody> },
+  TContext
+> => {
+  const mutationKey = ["generatePractice"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generatePractice>>,
+    { data: BodyType<GeneratePracticeBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generatePractice(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GeneratePracticeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generatePractice>>
+>;
+export type GeneratePracticeMutationBody = BodyType<GeneratePracticeBody>;
+export type GeneratePracticeMutationError = ErrorType<GeminiError>;
+
+/**
+ * @summary Generate practice questions from tutor response context
+ */
+export const useGeneratePractice = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generatePractice>>,
+    TError,
+    { data: BodyType<GeneratePracticeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generatePractice>>,
+  TError,
+  { data: BodyType<GeneratePracticeBody> },
+  TContext
+> => {
+  return useMutation(getGeneratePracticeMutationOptions(options));
+};
+
+/**
+ * @summary Run trace-back diagnostic evaluation on a student's answer
+ */
+export const getRunDiagnosticUrl = () => {
+  return `/api/tutor/diagnostic`;
+};
+
+export const runDiagnostic = async (
+  runDiagnosticBody: RunDiagnosticBody,
+  options?: RequestInit,
+): Promise<DiagnosticResponse> => {
+  return customFetch<DiagnosticResponse>(getRunDiagnosticUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(runDiagnosticBody),
+  });
+};
+
+export const getRunDiagnosticMutationOptions = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof runDiagnostic>>,
+    TError,
+    { data: BodyType<RunDiagnosticBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof runDiagnostic>>,
+  TError,
+  { data: BodyType<RunDiagnosticBody> },
+  TContext
+> => {
+  const mutationKey = ["runDiagnostic"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof runDiagnostic>>,
+    { data: BodyType<RunDiagnosticBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return runDiagnostic(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RunDiagnosticMutationResult = NonNullable<
+  Awaited<ReturnType<typeof runDiagnostic>>
+>;
+export type RunDiagnosticMutationBody = BodyType<RunDiagnosticBody>;
+export type RunDiagnosticMutationError = ErrorType<GeminiError>;
+
+/**
+ * @summary Run trace-back diagnostic evaluation on a student's answer
+ */
+export const useRunDiagnostic = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof runDiagnostic>>,
+    TError,
+    { data: BodyType<RunDiagnosticBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof runDiagnostic>>,
+  TError,
+  { data: BodyType<RunDiagnosticBody> },
+  TContext
+> => {
+  return useMutation(getRunDiagnosticMutationOptions(options));
 };
 
 /**
