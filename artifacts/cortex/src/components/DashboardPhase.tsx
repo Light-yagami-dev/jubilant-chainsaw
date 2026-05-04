@@ -1,5 +1,13 @@
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useGetMasteryMap, useGetRevisionQueue, useCompleteRevision } from "@workspace/api-client-react";
+import {
+  useGetMasteryMap,
+  useGetMasteryStats,
+  useGetRevisionQueue,
+  useCompleteRevision,
+} from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { getGetRevisionQueueQueryKey } from "@workspace/api-client-react";
 import { useAppStore } from "@/store/appStore";
 
 function ScoreBar({ score }: { score: number }) {
@@ -23,89 +31,271 @@ function ScoreBar({ score }: { score: number }) {
   );
 }
 
-function MasteryPanel() {
-  const { data, isLoading } = useGetMasteryMap();
+function scoreColorClass(score: number) {
+  if (score >= 80) return "border-green-500/30 text-green-400";
+  if (score >= 50) return "border-yellow-500/30 text-yellow-400";
+  return "border-red-500/30 text-red-400";
+}
+
+function StatCards() {
+  const { data: statsArr, isLoading } = useGetMasteryStats();
+
+  const totals = (statsArr ?? []).reduce(
+    (acc, s) => ({
+      totalTopics: acc.totalTopics + s.totalTopics,
+      masteredTopics: acc.masteredTopics + s.masteredTopics,
+      avgScore: acc.avgScore + s.averageScore,
+      count: acc.count + 1,
+    }),
+    { totalTopics: 0, masteredTopics: 0, avgScore: 0, count: 0 }
+  );
+  const avgScore = totals.count > 0 ? Math.round(totals.avgScore / totals.count) : 0;
+
+  const cards = [
+    { label: "Total Topics", value: isLoading ? "—" : totals.totalTopics, icon: "📚", color: "text-blue-400" },
+    { label: "Mastered", value: isLoading ? "—" : totals.masteredTopics, icon: "✅", color: "text-green-400" },
+    { label: "Avg Score", value: isLoading ? "—" : `${avgScore}%`, icon: "📊", color: "text-accent" },
+    { label: "Subjects", value: isLoading ? "—" : (statsArr?.length ?? 0), icon: "🎯", color: "text-purple-400" },
+  ];
 
   return (
-    <div className="glass p-5 space-y-3">
-      <div className="flex items-center justify-between mb-1">
-        <p className="text-xs font-mono text-muted uppercase tracking-widest">Mastery Scores</p>
-        <span className="tag">{data?.length ?? 0} topics</span>
-      </div>
-      {isLoading ? (
-        <p className="text-muted text-xs">Loading…</p>
-      ) : !data?.length ? (
-        <p className="text-muted text-xs italic">No mastery data yet — run a diagnostic to begin tracking.</p>
-      ) : (
-        <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
-          {data.map((m, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.04 }}
-              className="flex items-center gap-3"
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {cards.map((card, i) => (
+        <motion.div
+          key={card.label}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.06 }}
+          className="glass p-4 text-center"
+        >
+          <div className="text-2xl mb-1">{card.icon}</div>
+          <div className={`text-xl font-bold font-mono ${card.color}`}>{card.value}</div>
+          <div className="text-xs text-muted mt-0.5">{card.label}</div>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+type MasteryTab = "map" | "stats";
+
+function MasteryPanel() {
+  const [tab, setTab] = useState<MasteryTab>("map");
+  const [examFilter, setExamFilter] = useState("all");
+  const { data: entries, isLoading: mapLoading } = useGetMasteryMap(
+    examFilter !== "all" ? { examType: examFilter } : {}
+  );
+  const { data: statsArr, isLoading: statsLoading } = useGetMasteryStats();
+
+  const grouped = (entries ?? []).reduce<Record<string, typeof entries>>((acc, entry) => {
+    const key = entry.subject ?? "Other";
+    if (!acc[key]) acc[key] = [];
+    acc[key]!.push(entry);
+    return acc;
+  }, {});
+
+  const EXAMS = ["all", "NEET", "JEE", "UPSC", "CAT", "GATE"];
+
+  return (
+    <div className="glass p-5 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <p className="text-xs font-mono text-muted uppercase tracking-widest">Mastery Map</p>
+        <div className="flex gap-1">
+          {(["map", "stats"] as MasteryTab[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-3 py-1 rounded-lg text-xs font-mono transition-all ${
+                tab === t ? "bg-blue-500 text-white" : "text-muted hover:text-text"
+              }`}
             >
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-text truncate">{m.topic}</p>
-                <p className="text-xs text-muted font-mono">{m.examType} · {m.attempts}×</p>
-              </div>
-              <ScoreBar score={m.score} />
-            </motion.div>
+              {t === "map" ? "Topic Map" : "By Subject"}
+            </button>
           ))}
         </div>
+      </div>
+
+      {tab === "map" && (
+        <>
+          <div className="flex gap-1 flex-wrap">
+            {EXAMS.map((ex) => (
+              <button
+                key={ex}
+                onClick={() => setExamFilter(ex)}
+                className={`px-2 py-0.5 rounded text-xs font-mono border transition-all ${
+                  examFilter === ex
+                    ? "bg-blue-500/20 border-blue-500/50 text-accent"
+                    : "border-[hsl(var(--border-c))] text-muted hover:text-text"
+                }`}
+              >
+                {ex === "all" ? "All" : ex}
+              </button>
+            ))}
+          </div>
+          {mapLoading ? (
+            <p className="text-muted text-xs">Loading…</p>
+          ) : !entries?.length ? (
+            <p className="text-muted text-xs italic">No mastery data yet — run a diagnostic to begin tracking.</p>
+          ) : (
+            <div className="space-y-4 max-h-72 overflow-y-auto pr-1">
+              {Object.entries(grouped).map(([subj, items]) => (
+                <div key={subj}>
+                  <p className="text-xs font-mono text-muted uppercase tracking-widest mb-2">{subj}</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {items?.map((entry) => (
+                      <motion.div
+                        key={entry.id}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className={`rounded-lg border px-3 py-2 text-xs flex flex-col gap-0.5 ${scoreColorClass(entry.score)}`}
+                        style={{ background: "rgba(255,255,255,0.03)" }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold font-mono">{entry.score}%</span>
+                          <span className="text-[10px] opacity-60">{entry.attempts}×</span>
+                        </div>
+                        <span className="text-[11px] leading-tight opacity-80 line-clamp-2">{entry.topic}</span>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {tab === "stats" && (
+        <>
+          {statsLoading ? (
+            <p className="text-muted text-xs">Loading…</p>
+          ) : !statsArr?.length ? (
+            <p className="text-muted text-xs italic">No subject stats yet.</p>
+          ) : (
+            <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+              {statsArr.map((s, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="space-y-1"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-text font-medium">{s.subject} · <span className="text-muted">{s.examType}</span></p>
+                    <span className="text-xs text-muted font-mono">{s.masteredTopics}/{s.totalTopics} mastered</span>
+                  </div>
+                  <ScoreBar score={Math.round(s.averageScore)} />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 }
 
-function RevisionPanel() {
-  const { data, isLoading, refetch } = useGetRevisionQueue();
-  const completeRevision = useCompleteRevision({ mutation: { onSuccess: () => refetch() } });
+function formatDue(dateStr: string) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diff = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  if (diff <= 0) return "Due now";
+  if (diff === 1) return "Tomorrow";
+  return `In ${diff}d`;
+}
 
-  const diffColor: Record<string, string> = {
-    easy: "#10b981", medium: "#f59e0b", hard: "#ef4444",
-  };
+function RevisionPanel() {
+  const [tab, setTab] = useState<"due" | "upcoming">("due");
+  const queryClient = useQueryClient();
+  const { data, isLoading, refetch } = useGetRevisionQueue();
+  const completeRevision = useCompleteRevision({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetRevisionQueueQueryKey() });
+        refetch();
+      },
+    },
+  });
+
+  const now = new Date();
+  const dueItems = (data ?? []).filter((i) => new Date(i.nextReviewAt) <= now);
+  const upcomingItems = (data ?? []).filter((i) => new Date(i.nextReviewAt) > now);
+  const items = tab === "due" ? dueItems : upcomingItems;
 
   return (
     <div className="glass p-5 space-y-3">
       <div className="flex items-center justify-between mb-1">
         <p className="text-xs font-mono text-muted uppercase tracking-widest">Revision Queue</p>
-        <span className="tag">{data?.length ?? 0} pending</span>
+        <div className="flex gap-1">
+          {(["due", "upcoming"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-2 py-0.5 rounded text-xs font-mono transition-all ${
+                tab === t ? "bg-blue-500 text-white" : "text-muted hover:text-text"
+              }`}
+            >
+              {t === "due" ? `Due (${dueItems.length})` : `Soon (${upcomingItems.length})`}
+            </button>
+          ))}
+        </div>
       </div>
+
       {isLoading ? (
         <p className="text-muted text-xs">Loading…</p>
-      ) : !data?.length ? (
-        <p className="text-muted text-xs italic">Queue is clear — topics flagged for revision will appear here.</p>
+      ) : !items.length ? (
+        <p className="text-muted text-xs italic">
+          {tab === "due" ? "No revisions due — great work!" : "No upcoming revisions queued."}
+        </p>
       ) : (
         <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
           <AnimatePresence>
-            {data.map((item, i) => {
-              const difficulty = item.score < 40 ? "hard" : item.score < 70 ? "medium" : "easy";
+            {items.map((item, i) => {
+              const isDue = new Date(item.nextReviewAt) <= now;
               return (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.25, delay: i * 0.03 }}
-                  className="flex items-center justify-between gap-3 py-1.5 border-b border-[hsl(var(--border-c))] last:border-0"
+                  transition={{ duration: 0.2, delay: i * 0.03 }}
+                  className="flex items-center justify-between gap-3 py-2 border-b border-[hsl(var(--border-c))] last:border-0"
                 >
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-xs text-text truncate">{item.topic}</p>
-                    <p className="text-xs text-muted font-mono">{item.examType}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[10px] text-muted font-mono">{item.examType}</span>
+                      <span className="text-[10px] text-muted">·</span>
+                      <span className={`text-[10px] font-mono ${isDue ? "text-red-400" : "text-muted"}`}>
+                        {formatDue(item.nextReviewAt)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="tag" style={{ color: diffColor[difficulty], borderColor: diffColor[difficulty] }}>
-                      {difficulty}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`text-xs font-mono ${item.score < 50 ? "text-red-400" : "text-yellow-400"}`}>
+                      {item.score}%
                     </span>
-                    <button
-                      onClick={() => completeRevision.mutate({ id: item.id, data: { passed: true, score: 80 } })}
-                      className="text-muted hover:text-green-400 transition-colors text-xs"
-                      title="Mark done"
-                    >
-                      ✓
-                    </button>
+                    {isDue && (
+                      <>
+                        <button
+                          onClick={() => completeRevision.mutate({ id: item.id, data: { passed: false, score: 20 } })}
+                          disabled={completeRevision.isPending}
+                          className="text-red-400/60 hover:text-red-400 transition-colors text-xs px-1.5 py-0.5 rounded border border-red-500/20 hover:border-red-500/40"
+                          title="Missed"
+                        >
+                          ✗
+                        </button>
+                        <button
+                          onClick={() => completeRevision.mutate({ id: item.id, data: { passed: true, score: 80 } })}
+                          disabled={completeRevision.isPending}
+                          className="text-green-400/60 hover:text-green-400 transition-colors text-xs px-1.5 py-0.5 rounded border border-green-500/20 hover:border-green-500/40"
+                          title="Got it"
+                        >
+                          ✓
+                        </button>
+                      </>
+                    )}
                   </div>
                 </motion.div>
               );
@@ -168,16 +358,16 @@ export default function DashboardPhase({ onReplay }: { onReplay: (query: string)
 
   return (
     <div className="min-h-screen px-4 py-10 max-w-3xl mx-auto space-y-4 bg-[hsl(var(--void))]">
-      <div className="mb-6">
+      <div className="mb-4">
         <p className="tag mb-2">PERSISTENCE LAYER</p>
         <h2 className="text-2xl font-bold text-text">Learning Dashboard</h2>
         <p className="text-muted text-sm mt-1">Session history · Mastery scores · Revision queue</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <MasteryPanel />
-        <RevisionPanel />
-      </div>
+      <StatCards />
+
+      <MasteryPanel />
+      <RevisionPanel />
 
       <HistoryPanel onReplay={onReplay} />
 

@@ -1,7 +1,12 @@
 import { motion } from "framer-motion";
 import { useAppStore, type TargetExam, type PedagogyStyle, type Language, type ModelId } from "@/store/appStore";
 
-const EXAMS: TargetExam[] = ["JEE", "NEET", "UPSC", "CAT", "GATE", "SAT", "GRE", "GMAT", "IELTS", "Class 10", "Class 12"];
+const EXAMS: TargetExam[] = [
+  "NEET", "JEE", "UPSC", "CAT", "GATE", "SSC MTS", "SSC CHSL",
+  "SAT", "GRE", "GMAT", "IELTS",
+  "BCECE", "B.Sc. Biotechnology", "B.Sc. Microbiology",
+  "Class 10", "Class 12",
+];
 const MODELS: ModelId[] = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"];
 const STYLES: PedagogyStyle[] = ["Simplified", "Standard", "Abstract"];
 const LANGS: Language[] = ["English", "Hindi", "Hinglish"];

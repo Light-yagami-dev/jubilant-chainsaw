@@ -42,10 +42,10 @@ auth → params → agent → tutor → dashboard
 | Phase | Component | Description |
 |-------|-----------|-------------|
 | `auth` | `AuthGateway.tsx` | Role selection (Student/Educator/Parent), tier/plan picker, dev bypass |
-| `params` | `ParameterMatrix.tsx` | Exam, pedagogy style, language, model selectors with tier gating |
-| `agent` | `AgentInit.tsx` | Query input + PDF upload; shows PulsingSphere while loading |
-| `tutor` | `TutorInterface.tsx` | Response display, practice questions, diagnostic engine, revision queue |
-| `dashboard` | `DashboardPhase.tsx` | Mastery map, revision queue, session history |
+| `params` | `ParameterMatrix.tsx` | Exam chips (16 exam types), pedagogy slider, language + model with tier locks |
+| `agent` | `AgentInit.tsx` | Query input + PDF upload + exam-specific prompt suggestions; PulsingSphere loading |
+| `tutor` | `TutorInterface.tsx` | Markdown response, TTS speak button, mnemonics, weak areas, clickable revision suggestions, practice questions, diagnostic engine with auto-queue on score < 5 |
+| `dashboard` | `DashboardPhase.tsx` | 4 stat cards (useGetMasteryStats), filterable topic map + by-subject stats view, revision queue with Due/Upcoming tabs + pass/fail buttons, session history |
 
 ### Zustand Store (`store/appStore.ts`)
 Tiers: `free | pro | pro_plus | developer`
@@ -104,6 +104,9 @@ Demo upgrade modal — activates Pro/Pro Plus for session via `setTierAndEntitle
 3. Grader (Gemini): verifies factual accuracy
 4. If grader fails, solver retries (up to 3 iterations)
 5. Cache response + return with mnemonics + revision suggestions
+
+### Supported Exam Types (ParameterMatrix)
+NEET, JEE, UPSC, CAT, GATE, SSC MTS, SSC CHSL, SAT, GRE, GMAT, IELTS, BCECE, B.Sc. Biotechnology, B.Sc. Microbiology, Class 10, Class 12
 
 ## Orval Codegen Notes
 

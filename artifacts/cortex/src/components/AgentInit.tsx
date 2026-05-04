@@ -4,6 +4,33 @@ import PulsingSphere from "@/three/PulsingSphere";
 import { useAppStore } from "@/store/appStore";
 import { useInvokeTutor, useUploadPdf } from "@workspace/api-client-react";
 
+const PROMPT_SUGGESTIONS: Record<string, string[]> = {
+  NEET: [
+    "Explain the mechanism of action potentials in neurons",
+    "What is the difference between meiosis and mitosis?",
+    "Describe Bohr's model of hydrogen atom",
+    "Explain osmosis and its role in plant cells",
+  ],
+  JEE: [
+    "Derive the equation for projectile motion",
+    "Explain Faraday's laws of electromagnetic induction",
+    "What is the concept of chemical equilibrium?",
+    "Solve: integration of sin²x dx",
+  ],
+  UPSC: [
+    "Explain the federal structure of Indian Constitution",
+    "What are the causes of soil erosion in India?",
+    "Describe the Green Revolution and its impact",
+    "Explain the working of the Indian Parliament",
+  ],
+  DEFAULT: [
+    "Explain this topic with an example",
+    "What are the key formulas I need to remember?",
+    "Give me a step-by-step derivation",
+    "What are common mistakes students make here?",
+  ],
+};
+
 function ProBadge({ label }: { label: string }) {
   return (
     <span className="inline-flex items-center gap-1 text-xs font-mono px-1.5 py-0.5 rounded bg-blue-500/15 text-accent border border-blue-500/25">
@@ -13,11 +40,16 @@ function ProBadge({ label }: { label: string }) {
 }
 
 export default function AgentInit() {
-  const { params, loading, error, entitlements, tier, setUpgradeModal, setLoading, setError, setAgentResult, setLastQuery, setContext } = useAppStore();
+  const {
+    params, loading, error, entitlements, tier, setUpgradeModal,
+    setLoading, setError, setAgentResult, setLastQuery, setContext,
+  } = useAppStore();
   const [query, setQuery] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
   const [localLoading, setLocalLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const suggestions = PROMPT_SUGGESTIONS[params.target_exam] ?? PROMPT_SUGGESTIONS.DEFAULT;
 
   const invokeTutor = useInvokeTutor({
     mutation: {
@@ -178,6 +210,32 @@ export default function AgentInit() {
                 </button>
               </div>
             </div>
+
+            {!query && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="space-y-2"
+              >
+                <p className="text-xs text-muted font-mono text-center">— or try a suggestion —</p>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {suggestions.map((s, i) => (
+                    <motion.button
+                      key={i}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.35 + i * 0.05 }}
+                      onClick={() => setQuery(s)}
+                      className="text-xs px-3 py-1.5 rounded-full border border-[hsl(var(--border-c))]
+                                 text-muted hover:border-blue-500/40 hover:text-accent transition-all"
+                    >
+                      {s}
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             {error && (
               <motion.div
