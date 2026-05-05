@@ -11,6 +11,26 @@ env = { "CI" = "true" }
 [workflows]
 runButton = "Project"
 
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "artifacts/doc-extractor: Doc Extractor"
+
+[[workflows.workflow]]
+name = "artifacts/doc-extractor: Doc Extractor"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python artifacts/doc-extractor/main.py"
+
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true
@@ -28,8 +48,22 @@ localPort = 8081
 externalPort = 80
 
 [[ports]]
+localPort = 8082
+externalPort = 3001
+
+[[ports]]
+localPort = 8083
+externalPort = 3002
+
+[[ports]]
 localPort = 26005
 externalPort = 3000
 
 [nix]
 packages = ["zip"]
+
+[userenv]
+
+[userenv.shared]
+SUPABASE_URL = "https://fxvowblsaivmpixmkpmf.supabase.co"
+SUPABASE_API_KEY = "sb_publishable_wnZ_Gn3NLmYHMSIdfIZ1CQ__8ODbA6y"

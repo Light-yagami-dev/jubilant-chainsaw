@@ -154,6 +154,12 @@ export const InvokeTutorBody = zod.object({
   studentAnswer: zod.string().optional(),
   questionMode: zod.boolean().optional(),
   conversationId: zod.number().optional(),
+  sessionToken: zod
+    .string()
+    .optional()
+    .describe(
+      "Token returned from \/ingest\/pdf to inject extracted document context",
+    ),
 });
 
 export const InvokeTutorResponse = zod.object({
@@ -179,6 +185,13 @@ export const UploadPdfResponse = zod.object({
   chunks: zod.number(),
   topics: zod.array(zod.string()),
   message: zod.string(),
+  sessionToken: zod
+    .string()
+    .describe(
+      "UUID token to pass to \/tutor\/invoke so the LLM receives the extracted document as context",
+    ),
+  charCount: zod.number().optional(),
+  pageCount: zod.number().optional(),
 });
 
 /**

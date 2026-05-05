@@ -96,6 +96,7 @@ interface AppState {
   upgradeModal: boolean;
   params: TutorParams;
   context: string;
+  documentSessionToken: string | null;
   lastQuery: string;
   agentResult: AgentResult | null;
   practiceOutput: string | null;
@@ -107,6 +108,7 @@ interface AppState {
   login: (user: User) => void;
   setParam: <K extends keyof TutorParams>(key: K, value: TutorParams[K]) => void;
   setContext: (ctx: string) => void;
+  setDocumentSessionToken: (token: string | null) => void;
   setLastQuery: (q: string) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -132,6 +134,7 @@ export const useAppStore = create<AppState>((set) => ({
     model: "gemini-2.5-flash",
   },
   context: "",
+  documentSessionToken: null,
   lastQuery: "",
   agentResult: null,
   practiceOutput: null,
@@ -154,6 +157,7 @@ export const useAppStore = create<AppState>((set) => ({
     set((s) => ({ params: { ...s.params, [key]: value } })),
 
   setContext: (ctx) => set({ context: ctx }),
+  setDocumentSessionToken: (token) => set({ documentSessionToken: token }),
   setLastQuery: (q) => set({ lastQuery: q }),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
@@ -180,6 +184,7 @@ export const useAppStore = create<AppState>((set) => ({
       practiceOutput: null,
       diagnosticOutput: null,
       context: "",
+      documentSessionToken: null,
       error: null,
       phase: "agent",
     }),

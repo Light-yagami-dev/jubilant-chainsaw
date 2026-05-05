@@ -11,6 +11,7 @@ export interface TutorState {
   pedagogyStyle: "hinglish" | "english" | "mnemonic";
   studentAnswer?: string;
   questionMode?: boolean;
+  documentContext?: string;
   solverResponse?: string;
   graderPassed?: boolean;
   mnemonics: string[];
@@ -19,8 +20,10 @@ export interface TutorState {
   iterations: number;
 }
 
-function getQueryHash(input: string, exam: string, style: string): string {
-  return createHash("sha256").update(`${input}::${exam}::${style}`).digest("hex");
+function getQueryHash(input: string, exam: string, style: string, hasDoc: boolean): string {
+  return createHash("sha256")
+    .update(`${input}::${exam}::${style}::${hasDoc ? "doc" : "nodoc"}`)
+    .digest("hex");
 }
 
 async function checkSemanticCache(queryHash: string): Promise<string | null> {
@@ -57,6 +60,15 @@ async function storeInCache(queryHash: string, queryText: string, response: stri
   }
 }
 
+function buildDocumentContextBlock(documentContext: string): string {
+  const MAX_CONTEXT_CHARS = 12_000;
+  const ctx = documentContext.length > MAX_CONTEXT_CHARS
+    ? documentContext.slice(0, MAX_CONTEXT_CHARS) + "\n\n[...content truncated for length...]"
+    : documentContext;
+
+  return `\n\n--- UPLOADED DOCUMENT CONTEXT ---\nThe student has uploaded a document. Use the following extracted text as your primary knowledge source when answering. Cross-reference it with your exam expertise.\n\n${ctx}\n--- END DOCUMENT CONTEXT ---\n`;
+}
+
 function buildSolverPrompt(state: TutorState): string {
   const examContext = state.targetExam === "NEET"
     ? "NEET Biology/Chemistry/Physics medical entrance exam"
@@ -70,8 +82,10 @@ function buildSolverPrompt(state: TutorState): string {
     mnemonic: `Generate powerful memory techniques. Create acronyms, stories, rhymes, and visual associations. Focus on making the concept unforgettable through the generation effect.`,
   };
 
+  const docBlock = state.documentContext ? buildDocumentContextBlock(state.documentContext) : "";
+
   if (state.studentAnswer) {
-    return `You are an expert ${examContext} tutor evaluating a student's answer.
+    return `You are an expert ${examContext} tutor evaluating a student's answer.${docBlock}
 
 Student's Question/Problem: ${state.userInput}
 Student's Answer: ${state.studentAnswer}
@@ -90,13 +104,13 @@ Format your response as JSON:
 }`;
   }
 
-  return `You are an expert ${examContext} tutor. ${state.subject ? `Subject: ${state.subject}` : ""}
+  return `You are an expert ${examContext} tutor. ${state.subject ? `Subject: ${state.subject}` : ""}${docBlock}
 
 Student's Question: ${state.userInput}
 
 ${styleInstructions[state.pedagogyStyle]}
 
-Provide a comprehensive educational explanation. Be thorough enough for exam preparation.
+Provide a comprehensive educational explanation. Be thorough enough for exam preparation.${state.documentContext ? " Prioritise content from the uploaded document when relevant." : ""}
 
 Format your response as JSON:
 {
@@ -142,29 +156,32 @@ export async function runTutorWorkflow(state: TutorState): Promise<{
   weakTopics: string[];
   revisionSuggestions: string[];
 }> {
-  const queryHash = getQueryHash(state.userInput, state.targetExam, state.pedagogyStyle);
+  const hasDoc = Boolean(state.documentContext);
+  const queryHash = getQueryHash(state.userInput, state.targetExam, state.pedagogyStyle, hasDoc);
 
-  const cached = await checkSemanticCache(queryHash);
-  if (cached) {
-    try {
-      const parsed = JSON.parse(cached);
-      return {
-        response: parsed.explanation || cached,
-        cacheHit: true,
-        gradingPassed: true,
-        mnemonics: parsed.mnemonics || [],
-        weakTopics: parsed.weakTopics || [],
-        revisionSuggestions: parsed.revisionSuggestions || [],
-      };
-    } catch {
-      return {
-        response: cached,
-        cacheHit: true,
-        gradingPassed: true,
-        mnemonics: [],
-        weakTopics: [],
-        revisionSuggestions: [],
-      };
+  if (!hasDoc) {
+    const cached = await checkSemanticCache(queryHash);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        return {
+          response: parsed.explanation || cached,
+          cacheHit: true,
+          gradingPassed: true,
+          mnemonics: parsed.mnemonics || [],
+          weakTopics: parsed.weakTopics || [],
+          revisionSuggestions: parsed.revisionSuggestions || [],
+        };
+      } catch {
+        return {
+          response: cached,
+          cacheHit: true,
+          gradingPassed: true,
+          mnemonics: [],
+          weakTopics: [],
+          revisionSuggestions: [],
+        };
+      }
     }
   }
 
@@ -236,7 +253,9 @@ export async function runTutorWorkflow(state: TutorState): Promise<{
     finalResponse = solverOutput;
   }
 
-  await storeInCache(queryHash, state.userInput, solverOutput);
+  if (!hasDoc) {
+    await storeInCache(queryHash, state.userInput, solverOutput);
+  }
 
   return {
     response: finalResponse,

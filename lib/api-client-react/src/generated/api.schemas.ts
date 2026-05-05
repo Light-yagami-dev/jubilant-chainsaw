@@ -71,6 +71,8 @@ export interface InvokeTutorBody {
   studentAnswer?: string;
   questionMode?: boolean;
   conversationId?: number;
+  /** Token returned from /ingest/pdf to inject extracted document context */
+  sessionToken?: string;
 }
 
 export interface TutorResponse {
@@ -88,6 +90,10 @@ export interface UploadPdfResponse {
   chunks: number;
   topics: string[];
   message: string;
+  /** UUID token to pass to /tutor/invoke so the LLM receives the extracted document as context */
+  sessionToken: string;
+  charCount?: number;
+  pageCount?: number;
 }
 
 export type SynthesizeSpeechBodyLanguage =

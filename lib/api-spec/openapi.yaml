@@ -552,6 +552,9 @@ components:
           type: boolean
         conversationId:
           type: integer
+        sessionToken:
+          type: string
+          description: Token returned from /ingest/pdf to inject extracted document context
       required:
         - userInput
         - targetExam
@@ -597,10 +600,18 @@ components:
             type: string
         message:
           type: string
+        sessionToken:
+          type: string
+          description: UUID token to pass to /tutor/invoke so the LLM receives the extracted document as context
+        charCount:
+          type: integer
+        pageCount:
+          type: integer
       required:
         - chunks
         - topics
         - message
+        - sessionToken
 
     SynthesizeSpeechBody:
       type: object

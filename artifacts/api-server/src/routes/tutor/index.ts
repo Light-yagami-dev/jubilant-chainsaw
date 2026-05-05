@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { conversations, messages } from "@workspace/db";
+import { conversations, messages, documentContextsTable } from "@workspace/db";
 import { InvokeTutorBody } from "@workspace/api-zod";
 import { runTutorWorkflow } from "./workflow";
 import { generatePracticeQuestions } from "./practice";
 import { traceBackEvaluation } from "./diagnostic";
+import { eq } from "drizzle-orm";
 
 const router = Router();
 
@@ -16,7 +17,27 @@ router.post("/invoke", async (req, res) => {
       return;
     }
 
-    const { userInput, targetExam, subject, pedagogyStyle, studentAnswer, questionMode, conversationId } = parsed.data;
+    const { userInput, targetExam, subject, pedagogyStyle, studentAnswer, questionMode, conversationId, sessionToken } = parsed.data;
+
+    let documentContext: string | undefined;
+    if (sessionToken) {
+      try {
+        const [docCtx] = await db
+          .select()
+          .from(documentContextsTable)
+          .where(eq(documentContextsTable.sessionToken, sessionToken))
+          .limit(1);
+        if (docCtx) {
+          documentContext = docCtx.extractedText;
+          req.log.info(
+            { sessionToken, chars: docCtx.charCount, pages: docCtx.pageCount },
+            "Injecting document context into tutor prompt"
+          );
+        }
+      } catch (ctxErr) {
+        req.log.warn({ err: ctxErr, sessionToken }, "Failed to load document context — continuing without it");
+      }
+    }
 
     const result = await runTutorWorkflow({
       userInput,
@@ -25,6 +46,7 @@ router.post("/invoke", async (req, res) => {
       pedagogyStyle: (pedagogyStyle as "hinglish" | "english" | "mnemonic") ?? "english",
       studentAnswer,
       questionMode,
+      documentContext,
       mnemonics: [],
       weakTopics: [],
       revisionSuggestions: [],

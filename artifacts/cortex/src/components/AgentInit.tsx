@@ -43,6 +43,7 @@ export default function AgentInit() {
   const {
     params, loading, error, entitlements, tier, setUpgradeModal,
     setLoading, setError, setAgentResult, setLastQuery, setContext,
+    documentSessionToken, setDocumentSessionToken,
   } = useAppStore();
   const [query, setQuery] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
@@ -78,7 +79,15 @@ export default function AgentInit() {
   const uploadPdf = useUploadPdf({
     mutation: {
       onSuccess: (data) => {
-        setContext(`[PDF: ${fileName} — ${data.topics.length} topics, ${data.chunks} chunks indexed]`);
+        setDocumentSessionToken(data.sessionToken);
+        const pages = data.pageCount ? ` · ${data.pageCount}p` : "";
+        const chars = data.charCount ? ` · ${(data.charCount / 1000).toFixed(1)}k chars` : "";
+        setContext(
+          `[PDF: ${fileName} — ${data.topics.length} topics indexed${pages}${chars}]`
+        );
+      },
+      onError: () => {
+        setError("Document extraction failed — ensure the Doc Extractor service is running.");
       },
     },
   });
@@ -87,6 +96,7 @@ export default function AgentInit() {
     const f = e.target.files?.[0];
     if (!f) return;
     setFileName(f.name);
+    setDocumentSessionToken(null);
     uploadPdf.mutate({ data: { file: f, examType: params.target_exam } });
   }
 
@@ -103,6 +113,7 @@ export default function AgentInit() {
         targetExam: params.target_exam,
         subject: undefined,
         pedagogyStyle: params.pedagogy_style.toLowerCase() as "simplified" | "standard" | "abstract",
+        sessionToken: documentSessionToken ?? undefined,
       },
     });
   }

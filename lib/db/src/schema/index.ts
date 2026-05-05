@@ -23,3 +23,4 @@ export * from "./mastery";
 export * from "./revision";
 export * from "./syllabus";
 export * from "./semantic-cache";
+export * from "./document-context";
