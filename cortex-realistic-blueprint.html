@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cortex AI - Realistic Implementation Blueprint</title>
+  <style>
+    @page { size: A4 portrait; margin: 14mm 12mm; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    :root {
+      --accent: #f59e0b;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --rule: #e5e7eb;
+      --paper: #f9fafb;
+      --success: #16a34a;
+      --error: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    body {
+      font-family: -apple-system, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      line-height: 1.6;
+      font-size: 10pt;
+    }
+
+    /* Cover */
+    .cover {
+      page-break-after: always;
+      min-height: 268mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+      color: white;
+      padding: 48px;
+    }
+    .cover-tag {
+      background: rgba(245, 158, 11, 0.3);
+      border: 1px solid rgba(245, 158, 11, 0.5);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 9pt;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+    }
+    .cover h1 {
+      font-size: 38pt;
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      line-height: 1.1;
+    }
+    .cover h1 span { color: #f59e0b; }
+    .cover-subtitle {
+      font-size: 13pt;
+      color: rgba(255,255,255,0.7);
+      max-width: 500px;
+      margin-bottom: 48px;
+    }
+    .cover-stats {
+      display: flex;
+      gap: 24px;
+      margin-top: auto;
+    }
+    .cover-stat {
+      text-align: center;
+      padding: 16px 24px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+    }
+    .cover-stat .num { font-size: 22pt; font-weight: 600; color: #f59e0b; }
+    .cover-stat .lbl { font-size: 8pt; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; }
+
+    /* Page sections */
+    .page { page-break-after: always; padding: 32px 0; }
+    .page:last-child { page-break-after: auto; }
+
+    /* Section headers */
+    .section-num {
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    h2 {
+      font-size: 18pt;
+      font-weight: 400;
+      margin-bottom: 16px;
+      color: var(--ink);
+    }
+    h3 {
+      font-size: 11pt;
+      font-weight: 600;
+      margin: 16px 0 8px;
+      color: var(--ink);
+    }
+    p { margin-bottom: 10px; }
+
+    /* Status boxes */
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin: 16px 0;
+    }
+    .status-box {
+      padding: 16px;
+      border-radius: 10px;
+      border-left: 4px solid;
+    }
+    .status-box.done { background: #dcfce7; border-color: #16a34a; }
+    .status-box.in-progress { background: #fef3c7; border-color: #f59e0b; }
+    .status-box.todo { background: #fee2e2; border-color: #ef4444; }
+    .status-box h4 { font-size: 10pt; margin-bottom: 4px; }
+    .status-box p { font-size: 9pt; color: var(--muted); margin: 0; }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9pt;
+      margin: 12px 0;
+    }
+    th, td {
+      border: 0.5pt solid #d0d0d0;
+      padding: 7px 9px;
+      text-align: left;
+    }
+    th {
+      background: #f3f4f6;
+      font-weight: 600;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    tr:nth-child(even) { background: #fafafa; }
+
+    /* Feature cards */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 12px 0;
+    }
+    .feature-card {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .feature-card h4 {
+      font-size: 10pt;
+      margin-bottom: 6px;
+      color: var(--ink);
+    }
+    .feature-card p {
+      font-size: 8pt;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    /* Timeline */
+    .timeline {
+      margin: 16px 0;
+    }
+    .timeline-item {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .timeline-period {
+      width: 70px;
+      flex-shrink: 0;
+      font-size: 9pt;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .timeline-content {
+      flex: 1;
+      border-left: 2px solid var(--rule);
+      padding-left: 16px;
+      position: relative;
+    }
+    .timeline-content::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      position: absolute;
+      left: -5px;
+      top: 3px;
+    }
+    .timeline-content h4 { font-size: 10pt; margin-bottom: 4px; }
+    .timeline-content ul { font-size: 8pt; color: var(--muted); margin: 0; padding-left: 14px; }
+    .timeline-content li { margin-bottom: 2px; }
+
+    /* Architecture box */
+    .arch-box {
+      background: #f8fafc;
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 14px;
+      margin: 12px 0;
+      font-family: monospace;
+      font-size: 7.5pt;
+      line-height: 1.6;
+    }
+
+    /* Callout */
+    .callout {
+      background: #fffbeb;
+      border-left: 4px solid var(--warning);
+      padding: 12px 16px;
+      margin: 12px 0;
+      font-size: 9pt;
+    }
+    .callout .label {
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 4px;
+    }
+
+    .callout.error {
+      background: #fef2f2;
+      border-color: var(--error);
+    }
+    .callout.error .label { color: #991b1b; }
+
+    .callout.success {
+      background: #f0fdf4;
+      border-color: var(--success);
+    }
+    .callout.success .label { color: #166534; }
+
+    /* Conclusion */
+    .conclusion {
+      background: #1f2937;
+      color: white;
+      padding: 18px;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+    .conclusion h4 {
+      font-size: 11pt;
+      margin-bottom: 6px;
+    }
+    .conclusion p {
+      font-size: 9pt;
+      opacity: 0.9;
+      margin: 0;
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-size: 7pt;
+      font-weight: 600;
+    }
+    .badge-hi { background: #fef3c7; color: #92400e; }
+    .badge-en { background: #dbeafe; color: #1e40af; }
+    .badge-ta { background: #fce7f3; color: #9d174d; }
+    .badge-te { background: #d1fae5; color: #065f46; }
+    .badge-new { background: #e0e7ff; color: #3730a3; }
+
+    /* Two column */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    /* Language card */
+    .lang-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .lang-flag { font-size: 20pt; }
+    .lang-info { flex: 1; }
+    .lang-info h4 { font-size: 10pt; margin-bottom: 2px; }
+    .lang-info p { font-size: 8pt; color: var(--muted); margin: 0; }
+    .lang-status { font-size: 8pt; padding: 3px 8px; border-radius: 10px; font-weight: 600; }
+    .lang-status.active { background: #dcfce7; color: #166534; }
+    .lang-status.planned { background: #fef3c7; color: #92400e; }
+    .lang-status.future { background: #f3f4f6; color: #6b7280; }
+  </style>
+</head>
+<body>
+
+<!-- COVER -->
+<section class="cover">
+  <div class="cover-tag">Honest Assessment · v1.0</div>
+  <h1>Cortex AI <span>Implementation</span></h1>
+  <p class="cover-subtitle">Realistic Blueprint Based on Actual GitHub Repository State</p>
+  <div class="cover-stats">
+    <div class="cover-stat">
+      <div class="num">2</div>
+      <div class="lbl">Languages Built</div>
+    </div>
+    <div class="cover-stat">
+      <div class="num">12</div>
+      <div class="lbl">Languages Planned</div>
+    </div>
+    <div class="cover-stat">
+      <div class="num">6-9mo</div>
+      <div class="lbl">To Full Launch</div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 1: HONEST ASSESSMENT -->
+<section class="page">
+  <span class="section-num">Part 01 · Current State</span>
+  <h2>GitHub Repository Reality Check</h2>
+
+  <div class="callout error">
+    <div class="label">⚠️ Important Finding</div>
+    The landing page claims "12+ languages" but the actual codebase only supports <strong>English and Hindi</strong>. This blueprint reflects the real implementation state.
+  </div>
+
+  <h3>Repository Statistics</h3>
+  <table>
+    <thead>
+      <tr><th>Metric</th><th>Value</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Commits</td><td>8</td><td>⚠️ Very Early Stage</td></tr>
+      <tr><td>Stars</td><td>1</td><td>⚠️ Needs Marketing</td></tr>
+      <tr><td>Forks</td><td>0</td><td>⚠️ No Community</td></tr>
+      <tr><td>README.md</td><td>❌ Missing</td><td>🔴 Action Required</td></tr>
+      <tr><td>Landing Page</td><td>✅ Beautiful</td><td>🟢 Aspirational Claims</td></tr>
+    </tbody>
+  </table>
+
+  <h3>What's Actually Built</h3>
+  <div class="status-grid">
+    <div class="status-box done">
+      <h4>✅ Frontend Stack</h4>
+      <p>React 18 + Vite + TypeScript + Zustand + Tailwind CSS + Framer Motion</p>
+    </div>
+    <div class="status-box done">
+      <h4>✅ Backend Stack</h4>
+      <p>Express 5 + TypeScript + Drizzle ORM + PostgreSQL</p>
+    </div>
+    <div class="status-box done">
+      <h4>✅ AI Integration</h4>
+      <p>Google Gemini (2.5 Flash) with LangGraph-style workflow</p>
+    </div>
+    <div class="status-box in-progress">
+      <h4>🔄 Languages</h4>
+      <p>Only English (EN) + Hindi (HI) implemented. TTS for both.</p>
+    </div>
+    <div class="status-box todo">
+      <h4>❌ Teacher Dashboard</h4>
+      <p>UI exists but backend integration NOT built</p>
+    </div>
+    <div class="status-box todo">
+      <h4>❌ Analytics</h4>
+      <p>No usage tracking or progress analytics implemented</p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 2: LANGUAGE COMPARISON -->
+<section class="page">
+  <span class="section-num">Part 02 · Language Analysis</span>
+  <h2>Language Implementation Status</h2>
+
+  <h3>Current vs. Target</h3>
+  <div class="lang-card">
+    <span class="lang-flag">🇺🇸</span>
+    <div class="lang-info">
+      <h4>English (EN)</h4>
+      <p>TTS implemented, UI ready, full support</p>
+    </div>
+    <span class="lang-status active">✅ Built</span>
+  </div>
+  <div class="lang-card">
+    <span class="lang-flag">🇮🇳</span>
+    <div class="lang-info">
+      <h4>Hindi (HI) - हिंदी</h4>
+      <p>TTS implemented, UI ready, full support</p>
+    </div>
+    <span class="lang-status active">✅ Built</span>
+  </div>
+  <div class="lang-card">
+    <span class="lang-flag">🇮🇳</span>
+    <div class="lang-info">
+      <h4>Tamil (TA) - தமிழ்</h4>
+      <p>Not implemented, requires ASR/NMT/TTS</p>
+    </div>
+    <span class="lang-status planned">📅 Q2</span>
+  </div>
+  <div class="lang-card">
+    <span class="lang-flag">🇮🇳</span>
+    <div class="lang-info">
+      <h4>Telugu (TE) - తెలుగు</h4>
+      <p>Not implemented, requires ASR/NMT/TTS</p>
+    </div>
+    <span class="lang-status planned">📅 Q2</span>
+  </div>
+  <div class="lang-card">
+    <span class="lang-flag">🇮🇳</span>
+    <div class="lang-info">
+      <h4>Marathi (MR) - मराठी</h4>
+      <p>Not implemented</p>
+    </div>
+    <span class="lang-status future">📅 Q3</span>
+  </div>
+  <div class="lang-card">
+    <span class="lang-flag">🇮🇳</span>
+    <div class="lang-info">
+      <h4>Bengali + 8 more</h4>
+      <p>Not implemented, lower priority</p>
+    </div>
+    <span class="lang-status future">📅 Q4+</span>
+  </div>
+
+  <div class="callout">
+    <div class="label">📋 Implementation Requirements Per Language</div>
+    Each additional language requires: Speech Recognition (ASR), Machine Translation (NMT), Text-to-Speech (TTS), Font support, UI translation, Curriculum alignment
+  </div>
+</section>
+
+<!-- SECTION 3: ARCHITECTURE -->
+<section class="page">
+  <span class="section-num">Part 03 · Technical Architecture</span>
+  <h2>Language Processing Pipeline</h2>
+
+  <h3>Current Architecture (EN/HI Only)</h3>
+  <div class="arch-box">
+┌─────────────────────────────────────────────────────┐
+│              USER INPUT                              │
+│         (Text or Voice - EN/HI only)                │
+└─────────────────────┬───────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────┐
+│            FRONTEND (React PWA)                     │
+│    Input → Language Detection → API Call              │
+└─────────────────────┬───────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────┐
+│           API SERVER (Express)                       │
+│    Route → Validate → Transform                      │
+└─────────────────────┬───────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────┐
+│        AI SERVICE (Gemini 2.5 Flash)                │
+│    Context → Curriculum Map → Response               │
+└─────────────────────┬───────────────────────────────┘
+                      │
+          ┌───────────┴───────────┐
+          ▼                       ▼
+┌──────────────────┐   ┌──────────────────┐
+│   English TTS    │   │    Hindi TTS      │
+│   (Built)        │   │    (Built)        │
+└──────────────────┘   └──────────────────┘
+  </div>
+
+  <h3>Required Architecture for 12 Languages</h3>
+  <div class="arch-box">
+┌─────────────────────────────────────────────────────┐
+│              USER INPUT                              │
+│         (Text or Voice - Any Language)              │
+└─────────────────────┬───────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────┐
+│           LANGUAGE DETECTION SERVICE                  │
+│    Detect: HI, TA, TE, MR, BN, KN, ML, GU, OR...  │
+└─────────────────────┬───────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────┐
+│           TRANSLATION SERVICE (NMT)                   │
+│    Bhashini API / Google Translate / Azure AI       │
+│    Target: EN (for AI processing)                    │
+└─────────────────────┬───────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────┐
+│        AI SERVICE (Gemini 2.5 Flash)                 │
+│    Process in English, preserve context               │
+└─────────────────────┬───────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────┐
+│        REVERSE TRANSLATION SERVICE                     │
+│    Translate response back to user's language        │
+└─────────────────────┬───────────────────────────────┘
+                      │
+          ┌───────────┴───────────┬─────────────┐
+          ▼                       ▼             ▼
+┌──────────────────┐  ┌────────────────┐  ┌───────────┐
+│    Hindi TTS     │  │   Tamil TTS    │  │    ...    │
+└──────────────────┘  └────────────────┘  └───────────┘
+  </div>
+
+  <h3>Technology Additions Needed</h3>
+  <table>
+    <thead>
+      <tr><th>Service</th><th>Provider</th><th>Cost</th><th>Languages</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Translation API</td><td>Bhashini (Free)</td><td>Free tier</td><td>All 12</td></tr>
+      <tr><td>Speech Recognition</td><td>Bhashini / Google</td><td>₹0.5/1000 chars</td><td>All 12</td></tr>
+      <tr><td>Text-to-Speech</td><td>Bhashini / Google</td><td>₹1/1000 chars</td><td>All 12</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- SECTION 4: PHASED ROADMAP -->
+<section class="page">
+  <span class="section-num">Part 04 · Implementation Plan</span>
+  <h2>Phased Language Expansion Roadmap</h2>
+
+  <h3>Phase 1: Foundation (Month 1-2)</h3>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-period">Week 1-2</div>
+      <div class="timeline-content">
+        <h4>Documentation & Cleanup</h4>
+        <ul>
+          <li>Add README.md to GitHub repo</li>
+          <li>Create SETUP.md with accurate language info</li>
+          <li>Fix landing page claims (12+ → 2)</li>
+          <li>Update SETUP.md with language status</li>
+        </ul>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-period">Week 3-4</div>
+      <div class="timeline-content">
+        <h4>Language Infrastructure</h4>
+        <ul>
+          <li>Integrate Bhashini API for translation</li>
+          <li>Add language detection middleware</li>
+          <li>Create translation service wrapper</li>
+          <li>Set up TTS service abstraction</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>Phase 2: First Expansion (Month 3-4)</h3>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-period">Month 3</div>
+      <div class="timeline-content">
+        <h4>Add Tamil (TA)</h4>
+        <ul>
+          <li>ASR integration for Tamil voice input</li>
+          <li>TTS integration for Tamil responses</li>
+          <li>UI translation for Tamil interface</li>
+          <li>Curriculum mapping for Tamil board</li>
+        </ul>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-period">Month 4</div>
+      <div class="timeline-content">
+        <h4>Add Telugu (TE)</h4>
+        <ul>
+          <li>ASR integration for Telugu voice input</li>
+          <li>TTS integration for Telugu responses</li>
+          <li>UI translation for Telugu interface</li>
+          <li>Curriculum mapping for Telugu board</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>Phase 3: Second Expansion (Month 5-6)</h3>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-period">Month 5</div>
+      <div class="timeline-content">
+        <h4>Add Marathi + Bengali</h4>
+        <ul>
+          <li>Marathi (MR) - ASR/TTS/UI</li>
+          <li>Bengali (BN) - ASR/TTS/UI</li>
+        </ul>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-period">Month 6</div>
+      <div class="timeline-content">
+        <h4>Add Gujarati + Kannada</h4>
+        <ul>
+          <li>Gujarati (GU) - ASR/TTS/UI</li>
+          <li>Kannada (KN) - ASR/TTS/UI</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>Phase 4: Final Expansion (Month 7-9)</h3>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-period">Month 7-8</div>
+      <div class="timeline-content">
+        <h4>Add Remaining Languages</h4>
+        <ul>
+          <li>Malayalam (ML)</li>
+          <li>Odia (OR)</li>
+          <li>Punjabi (PA)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-period">Month 9</div>
+      <div class="timeline-content">
+        <h4>Quality & Optimization</h4>
+        <ul>
+          <li>Performance optimization</li>
+          <li>Quality assurance for all languages</li>
+          <li>Documentation for 12 languages</li>
+          <li>Marketing materials update</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 5: IMPLEMENTATION DETAILS -->
+<section class="page">
+  <span class="section-num">Part 05 · Technical Details</span>
+  <h2>Language Service Implementation</h2>
+
+  <h3>1. Bhashini Integration</h3>
+  <pre>
+# Environment Variables
+BHASHINI_USER_ID=your-user-id
+BHASHINI_API_KEY=your-api-key
+BHASHINI_BASE_URL=https://meity-auth.ulcacontrib.in
+
+# Service endpoints
+TRANSLATION_API=ai4bharat/translation
+ASR_API=ai4bharat/asr
+TTS_API=ai4bharat/tts
+  </pre>
+
+  <h3>2. Language Detection Service</h3>
+  <pre>
+// lib/language-detection/detectLanguage.ts
+import { predict } from 'lingua-node';
+
+export async function detectLanguage(text: string): Promise&lt;LanguageCode&gt; {
+  const result = await predict(text);
+  const langMap = {
+    'hindi': 'hi',
+    'tamil': 'ta',
+    'telugu': 'te',
+    'marathi': 'mr',
+    'bengali': 'bn',
+    // ... etc
+  };
+  return langMap[result.language] || 'en';
+}
+
+type LanguageCode = 'en' | 'hi' | 'ta' | 'te' | 'mr' | 'bn' | 'gu' | 'kn' | 'ml' | 'or' | 'pa' | 'as';
+  </pre>
+
+  <h3>3. Translation Service</h3>
+  <pre>
+// services/translation/translate.ts
+import { BhashiniClient } from './bhashini-client';
+
+export async function translateToEnglish(
+  text: string,
+  sourceLang: LanguageCode
+): Promise&lt;string&gt; {
+  const client = new BhashiniClient();
+  return client.translate({
+    input: text,
+    sourceLanguage: sourceLang,
+    targetLanguage: 'en'
+  });
+}
+
+export async function translateFromEnglish(
+  text: string,
+  targetLang: LanguageCode
+): Promise&lt;string&gt; {
+  const client = new BhashiniClient();
+  return client.translate({
+    input: text,
+    sourceLanguage: 'en',
+    targetLanguage: targetLang
+  });
+}
+  </pre>
+
+  <h3>4. Language Router Middleware</h3>
+  <pre>
+// middleware/languageRouter.ts
+export const languageRouter = async (req, res, next) => {
+  const userLang = req.user?.preferredLanguage || 'en';
+
+  // Wrap AI response
+  const originalJson = res.json.bind(res);
+  res.json = async (data) => {
+    if (data.content && userLang !== 'en') {
+      data.content = await translateFromEnglish(data.content, userLang);
+    }
+    return originalJson(data);
+  };
+
+  next();
+};
+  </pre>
+</section>
+
+<!-- SECTION 6: TEACHER DASHBOARD -->
+<section class="page">
+  <span class="section-num">Part 06 · Missing Features</span>
+  <h2>Teacher Dashboard Implementation</h2>
+
+  <div class="callout error">
+    <div class="label">⚠️ Current State</div>
+    Teacher dashboard UI exists in the landing page mockups but NO backend implementation exists. This needs to be built from scratch.
+  </div>
+
+  <h3>Required Backend Features</h3>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <h4>Student Analytics API</h4>
+      <p>Endpoints to fetch student progress, engagement metrics, topic completion rates.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Class Overview API</h4>
+      <p>Aggregate metrics for entire class: average scores, common struggles, attendance.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Intervention Alerts</h4>
+      <p>Automated alerts when students fall behind or show declining performance.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Assignment Integration</h4>
+      <p>Create and assign practice sets based on class weaknesses.</p>
+    </div>
+  </div>
+
+  <h3>API Endpoints Needed</h3>
+  <pre>
+# Teacher Dashboard Endpoints
+GET    /teacher/classes                    # List teacher's classes
+GET    /teacher/classes/:id/students      # Students in class
+GET    /teacher/classes/:id/analytics     # Class analytics
+GET    /teacher/students/:id/progress      # Individual progress
+GET    /teacher/students/:id/interventions # Intervention history
+POST   /teacher/assignments                # Create assignment
+GET    /teacher/topics/:id/struggles      # Topic difficulty analysis
+  </pre>
+
+  <h3>Database Tables Required</h3>
+  <table>
+    <thead>
+      <tr><th>Table</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>class_enrollments</td><td>Link students to classes</td></tr>
+      <tr><td>teacher_classes</td><td>Link teachers to classes</td></tr>
+      <tr><td>student_progress</td><td>Track learning progress per topic</td></tr>
+      <tr><td>intervention_logs</td><td>Record teacher interventions</td></tr>
+      <tr><td>assignments</td><td>Teacher-created assignments</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- SECTION 7: CREDITS ESTIMATE -->
+<section class="page">
+  <span class="section-num">Part 07 · Resources</span>
+  <h2>Realistic Credits Estimate</h2>
+
+  <h3>Language Expansion Workload</h3>
+  <table>
+    <thead>
+      <tr><th>Language</th><th>ASR</th><th>TTS</th><th>UI</th><th>Curriculum</th><th>Est. Credits</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="badge badge-hi">Hindi</span> (Already built)</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>0</td></tr>
+      <tr><td><span class="badge badge-ta">Tamil</span></td><td>🔧</td><td>🔧</td><td>🔧</td><td>🔧</td><td>8,000</td></tr>
+      <tr><td><span class="badge badge-te">Telugu</span></td><td>🔧</td><td>🔧</td><td>🔧</td><td>🔧</td><td>8,000</td></tr>
+      <tr><td><span class="badge badge-new">Marathi</span></td><td>🔧</td><td>🔧</td><td>🔧</td><td>🔧</td><td>8,000</td></tr>
+      <tr><td><span class="badge badge-new">Bengali</span></td><td>🔧</td><td>🔧</td><td>🔧</td><td>🔧</td><td>8,000</td></tr>
+      <tr><td><span class="badge badge-new">Gujarati</span></td><td>🔧</td><td>🔧</td><td>🔧</td><td>🔧</td><td>8,000</td></tr>
+      <tr><td><span class="badge badge-new">Kannada</span></td><td>🔧</td><td>🔧</td><td>🔧</td><td>🔧</td><td>8,000</td></tr>
+      <tr><td><span class="badge badge-new">Malayalam</span></td><td>🔧</td><td>🔧</td><td>🔧</td><td>🔧</td><td>8,000</td></tr>
+      <tr><td><span class="badge badge-new">Odia</span></td><td>🔧</td><td>🔧</td><td>🔧</td><td>🔧</td><td>8,000</td></tr>
+      <tr><td><span class="badge badge-new">Punjabi</span></td><td>🔧</td><td>🔧</td><td>🔧</td><td>🔧</td><td>8,000</td></tr>
+      <tr><td><span class="badge badge-new">Assamese</span></td><td>🔧</td><td>🔧</td><td>🔧</td><td>🔧</td><td>8,000</td></tr>
+      <tr><td style="font-weight:600;">Language Subtotal</td><td colspan="4"></td><td style="font-weight:600;">88,000</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Teacher Dashboard Workload</h3>
+  <table>
+    <thead>
+      <tr><th>Feature</th><th>Est. Credits</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Backend API endpoints</td><td>15,000</td></tr>
+      <tr><td>Database schema</td><td>5,000</td></tr>
+      <tr><td>Frontend integration</td><td>10,000</td></tr>
+      <tr><td>Testing</td><td>5,000</td></tr>
+      <tr><td style="font-weight:600;">Dashboard Subtotal</td><td style="font-weight:600;">35,000</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Other Missing Features</h3>
+  <table>
+    <thead>
+      <tr><th>Feature</th><th>Est. Credits</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Analytics & tracking</td><td>20,000</td></tr>
+      <tr><td>Parent portal</td><td>25,000</td></tr>
+      <tr><td>DPDP compliance</td><td>15,000</td></tr>
+      <tr><td>Payment integration</td><td>10,000</td></tr>
+      <tr><td>Documentation</td><td>5,000</td></tr>
+      <tr><td style="font-weight:600;">Other Subtotal</td><td style="font-weight:600;">75,000</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout success">
+    <div class="label">📊 Total Estimated Credits</div>
+    <strong>~198,000 credits</strong> to complete all promised features<br>
+    <small>vs. original estimate of 305,000-440,000 (which assumed nothing was built)</small>
+  </div>
+</section>
+
+<!-- SECTION 8: ACTION PLAN -->
+<section class="page">
+  <span class="section-num">Part 08 · Next Steps</span>
+  <h2>Immediate Action Items</h2>
+
+  <h3>This Week</h3>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-period">Day 1-2</div>
+      <div class="timeline-content">
+        <h4>GitHub Cleanup</h4>
+        <ul>
+          <li>Create README.md with accurate info</li>
+          <li>Fix SETUP.md language claims</li>
+          <li>Update landing page (optional)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-period">Day 3-4</div>
+      <div class="timeline-content">
+        <h4>Bhashini Setup</h4>
+        <ul>
+          <li>Create Bhashini account</li>
+          <li>Get API keys</li>
+          <li>Set up language detection</li>
+        </ul>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-period">Day 5-7</div>
+      <div class="timeline-content">
+        <h4>First Language Service</h4>
+        <ul>
+          <li>Build translation wrapper</li>
+          <li>Test Hindi ↔ English</li>
+          <li>Integrate with chat flow</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>Month 1 Milestone</h3>
+  <div class="conclusion" style="background: #16a34a;">
+    <h4>🎯 Goal: Infrastructure Ready</h4>
+    <p>Translation service abstracted, language detection working, architecture ready for 10 more languages without code duplication.</p>
+  </div>
+
+  <h3>Month 3 Milestone</h3>
+  <div class="conclusion" style="background: #8b5cf6;">
+    <h4>🎯 Goal: 4 Languages Live</h4>
+    <p>English, Hindi, Tamil, and Telugu fully functional with voice I/O, TTS, and curriculum alignment.</p>
+  </div>
+
+  <h3>Month 6 Milestone</h3>
+  <div class="conclusion" style="background: #f59e0b;">
+    <h4>🎯 Goal: 12 Languages + Dashboard</h4>
+    <p>All 12 languages functional, teacher dashboard with analytics, ready for school partnerships.</p>
+  </div>
+</section>
+
+<!-- SECTION 9: CONCLUSION -->
+<section class="page">
+  <span class="section-num">Part 09 · Summary</span>
+  <h2>Summary & Recommendations</h2>
+
+  <h3>Honest Assessment</h3>
+  <table>
+    <thead>
+      <tr><th>Claim</th><th>Landing Page</th><th>Reality</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Languages</td><td>12+</td><td>2 (EN, HI)</td></tr>
+      <tr><td>Pilot schools</td><td>6</td><td>0 (aspiration)</td></tr>
+      <tr><td>Improvement rate</td><td>94%</td><td>Not measured</td></tr>
+      <tr><td>Teacher dashboard</td><td>Built</td><td>UI only</td></tr>
+      <tr><td>2G optimized</td><td>Yes</td><td>Not implemented</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Path Forward</h3>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <h4>1. Be Honest</h4>
+      <p>Update landing page and materials to reflect actual state. Build trust through transparency.</p>
+    </div>
+    <div class="feature-card">
+      <h4>2. Focus on Quality</h4>
+      <p>Get 4 languages working perfectly before expanding. Quality over quantity.</p>
+    </div>
+    <div class="feature-card">
+      <h4>3. Build Incrementally</h4>
+      <p>Add languages one at a time. Each language should take 2-4 weeks, not months.</p>
+    </div>
+    <div class="feature-card">
+      <h4>4. Measure Everything</h4>
+      <p>Track actual usage, improvement rates, engagement. Only claim metrics you can prove.</p>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <div class="label">💡 Key Insight</div>
+    The foundation (React frontend, Express backend, Gemini AI) is solid. The main work remaining is adding language support and teacher dashboard. This is achievable in 6-9 months with focused effort.
+  </div>
+
+  <div style="margin-top: 32px; padding: 20px; background: #f3f4f6; border-radius: 10px; text-align: center;">
+    <h3 style="margin-bottom: 8px;">Ready to Start?</h3>
+    <p style="color: #6b7280; margin: 0;">Contact: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="5b3834292f3e23763a321b2b29342f343575363e">[email&#160;protected]</a> | cortex-ai.in</p>
+    <p style="color: #6b7280; margin-top: 8px;">GitHub: github.com/sidg7503-afk/Intelligent-Inference-Gateway</p>
+  </div>
+</section>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+</html>
