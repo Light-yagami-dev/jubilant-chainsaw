@@ -43,7 +43,7 @@ const StudyPlanResponseSchema = z.object({
 type StudyPlanRequest = z.infer<typeof StudyPlanRequestSchema>;
 type StudyPlanResponse = z.infer<typeof StudyPlanResponseSchema>;
 
-router.post("/study-plan", async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const {
       subject = "Biotechnology",

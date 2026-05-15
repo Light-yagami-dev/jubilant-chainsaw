@@ -11,6 +11,7 @@ const ExplainTopicRequestSchema = z.object({
   topic: z.string().min(1, "Topic is required"),
   subject: z.string().optional(),
   examType: z.string().default("BSC_BIOTECH_PART1"),
+  depth: z.enum(["basic", "detailed", "exam-focused"]).default("detailed"),
 });
 
 const ExplainTopicResponseSchema = z.object({
@@ -24,9 +25,9 @@ const ExplainTopicResponseSchema = z.object({
 type ExplainTopicRequest = z.infer<typeof ExplainTopicRequestSchema>;
 type ExplainTopicResponse = z.infer<typeof ExplainTopicResponseSchema>;
 
-router.post("/explain", async (req, res) => {
+router.post("/topic", async (req, res) => {
   try {
-    const { topic, subject, examType } = ExplainTopicRequestSchema.parse(req.body);
+    const { topic, subject, examType, depth } = ExplainTopicRequestSchema.parse(req.body);
 
     // First, try to find existing syllabus data
     const syllabusData = await db
@@ -43,11 +44,13 @@ router.post("/explain", async (req, res) => {
     // Generate detailed explanation using AI
     const prompt = `You are an expert B.Sc. Biotechnology tutor. Provide a comprehensive explanation for the topic "${topic}" for ${examType} exam.
 
+Depth: ${depth}
+${subject ? `Subject: ${subject}\n` : ""}
 ${context ? `Use this syllabus context as reference:\n${context}\n\n` : ""}
 
 Please structure your response as a JSON object with the following fields:
 - topic: The topic name
-- explanation: A detailed, engaging explanation (300-500 words) with examples and diagrams descriptions
+- explanation: A detailed, engaging explanation (300-500 words) with examples and diagram descriptions
 - keyPoints: Array of 5-8 key learning points
 - relatedTopics: Array of 3-5 related topics to study next
 - difficulty: "beginner", "intermediate", or "advanced"

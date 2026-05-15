@@ -192,6 +192,94 @@ export interface DiagnosticResponse {
   score: number;
 }
 
+export type ExplainTopicBodyDepth =
+  (typeof ExplainTopicBodyDepth)[keyof typeof ExplainTopicBodyDepth];
+
+export const ExplainTopicBodyDepth = {
+  basic: "basic",
+  detailed: "detailed",
+  "exam-focused": "exam-focused",
+} as const;
+
+export interface ExplainTopicBody {
+  topic: string;
+  subject?: string;
+  examType?: string;
+  depth?: ExplainTopicBodyDepth;
+}
+
+export type ExplainTopicResponseDifficulty =
+  (typeof ExplainTopicResponseDifficulty)[keyof typeof ExplainTopicResponseDifficulty];
+
+export const ExplainTopicResponseDifficulty = {
+  beginner: "beginner",
+  intermediate: "intermediate",
+  advanced: "advanced",
+} as const;
+
+export interface ExplainTopicResponse {
+  topic: string;
+  explanation: string;
+  keyPoints: string[];
+  relatedTopics: string[];
+  difficulty: ExplainTopicResponseDifficulty;
+}
+
+export type StudyPlanRequestCurrentLevel =
+  (typeof StudyPlanRequestCurrentLevel)[keyof typeof StudyPlanRequestCurrentLevel];
+
+export const StudyPlanRequestCurrentLevel = {
+  beginner: "beginner",
+  intermediate: "intermediate",
+  advanced: "advanced",
+} as const;
+
+export interface StudyPlanRequest {
+  subject?: string;
+  examType?: string;
+  duration: number;
+  dailyHours: number;
+  currentLevel?: StudyPlanRequestCurrentLevel;
+  weakTopics?: string[];
+  examDate?: string;
+}
+
+export type StudyPlanResponseStudyPlanItem = {
+  week: number;
+  day: number;
+  date: string;
+  topics: string[];
+  estimatedHours: number;
+  focus: string;
+  objectives: string[];
+};
+
+export type StudyPlanResponseRevisionScheduleItemType =
+  (typeof StudyPlanResponseRevisionScheduleItemType)[keyof typeof StudyPlanResponseRevisionScheduleItemType];
+
+export const StudyPlanResponseRevisionScheduleItemType = {
+  quick: "quick",
+  comprehensive: "comprehensive",
+  practice: "practice",
+} as const;
+
+export type StudyPlanResponseRevisionScheduleItem = {
+  date: string;
+  topics: string[];
+  type: StudyPlanResponseRevisionScheduleItemType;
+};
+
+export interface StudyPlanResponse {
+  subject: string;
+  duration: number;
+  dailyHours: number;
+  totalTopics: number;
+  studyPlan: StudyPlanResponseStudyPlanItem[];
+  revisionSchedule: StudyPlanResponseRevisionScheduleItem[];
+  tips: string[];
+  milestones: string[];
+}
+
 export type UploadPdfBody = {
   file: Blob;
   examType: string;

@@ -21,6 +21,8 @@ import type {
   CompleteRevisionBody,
   CreateGeminiConversationBody,
   DiagnosticResponse,
+  ExplainTopicBody,
+  ExplainTopicResponse,
   GeminiConversation,
   GeminiConversationWithMessages,
   GeminiError,
@@ -39,6 +41,8 @@ import type {
   RevisionEntry,
   RunDiagnosticBody,
   SendGeminiMessageBody,
+  StudyPlanRequest,
+  StudyPlanResponse,
   SynthesizeSpeechBody,
   SynthesizeSpeechResponse,
   TutorResponse,
@@ -986,6 +990,178 @@ export const useInvokeTutor = <
   TContext
 > => {
   return useMutation(getInvokeTutorMutationOptions(options));
+};
+
+/**
+ * @summary Get detailed explanation for a specific topic
+ */
+export const getExplainTopicUrl = () => {
+  return `/api/explain/topic`;
+};
+
+export const explainTopic = async (
+  explainTopicBody: ExplainTopicBody,
+  options?: RequestInit,
+): Promise<ExplainTopicResponse> => {
+  return customFetch<ExplainTopicResponse>(getExplainTopicUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(explainTopicBody),
+  });
+};
+
+export const getExplainTopicMutationOptions = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof explainTopic>>,
+    TError,
+    { data: BodyType<ExplainTopicBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof explainTopic>>,
+  TError,
+  { data: BodyType<ExplainTopicBody> },
+  TContext
+> => {
+  const mutationKey = ["explainTopic"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof explainTopic>>,
+    { data: BodyType<ExplainTopicBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return explainTopic(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ExplainTopicMutationResult = NonNullable<
+  Awaited<ReturnType<typeof explainTopic>>
+>;
+export type ExplainTopicMutationBody = BodyType<ExplainTopicBody>;
+export type ExplainTopicMutationError = ErrorType<GeminiError>;
+
+/**
+ * @summary Get detailed explanation for a specific topic
+ */
+export const useExplainTopic = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof explainTopic>>,
+    TError,
+    { data: BodyType<ExplainTopicBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof explainTopic>>,
+  TError,
+  { data: BodyType<ExplainTopicBody> },
+  TContext
+> => {
+  return useMutation(getExplainTopicMutationOptions(options));
+};
+
+/**
+ * @summary Generate a personalized study plan
+ */
+export const getGenerateStudyPlanUrl = () => {
+  return `/api/study-plan`;
+};
+
+export const generateStudyPlan = async (
+  studyPlanRequest: StudyPlanRequest,
+  options?: RequestInit,
+): Promise<StudyPlanResponse> => {
+  return customFetch<StudyPlanResponse>(getGenerateStudyPlanUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(studyPlanRequest),
+  });
+};
+
+export const getGenerateStudyPlanMutationOptions = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateStudyPlan>>,
+    TError,
+    { data: BodyType<StudyPlanRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateStudyPlan>>,
+  TError,
+  { data: BodyType<StudyPlanRequest> },
+  TContext
+> => {
+  const mutationKey = ["generateStudyPlan"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateStudyPlan>>,
+    { data: BodyType<StudyPlanRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateStudyPlan(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateStudyPlanMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateStudyPlan>>
+>;
+export type GenerateStudyPlanMutationBody = BodyType<StudyPlanRequest>;
+export type GenerateStudyPlanMutationError = ErrorType<GeminiError>;
+
+/**
+ * @summary Generate a personalized study plan
+ */
+export const useGenerateStudyPlan = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateStudyPlan>>,
+    TError,
+    { data: BodyType<StudyPlanRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateStudyPlan>>,
+  TError,
+  { data: BodyType<StudyPlanRequest> },
+  TContext
+> => {
+  return useMutation(getGenerateStudyPlanMutationOptions(options));
 };
 
 /**

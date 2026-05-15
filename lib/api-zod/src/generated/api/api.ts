@@ -174,10 +174,68 @@ export const InvokeTutorResponse = zod.object({
 });
 
 /**
+ * @summary Get detailed explanation for a specific topic
+ */
+export const ExplainTopicBody = zod.object({
+  topic: zod.string(),
+  subject: zod.string().optional(),
+  examType: zod.string().optional(),
+  depth: zod.enum(["basic", "detailed", "exam-focused"]).optional(),
+});
+
+export const ExplainTopicResponse = zod.object({
+  topic: zod.string(),
+  explanation: zod.string(),
+  keyPoints: zod.array(zod.string()),
+  relatedTopics: zod.array(zod.string()),
+  difficulty: zod.enum(["beginner", "intermediate", "advanced"]),
+});
+
+/**
+ * @summary Generate a personalized study plan
+ */
+export const GenerateStudyPlanBody = zod.object({
+  subject: zod.string().optional(),
+  examType: zod.string().optional(),
+  duration: zod.number(),
+  dailyHours: zod.number(),
+  currentLevel: zod.enum(["beginner", "intermediate", "advanced"]).optional(),
+  weakTopics: zod.array(zod.string()).optional(),
+  examDate: zod.coerce.date().optional(),
+});
+
+export const GenerateStudyPlanResponse = zod.object({
+  subject: zod.string(),
+  duration: zod.number(),
+  dailyHours: zod.number(),
+  totalTopics: zod.number(),
+  studyPlan: zod.array(
+    zod.object({
+      week: zod.number(),
+      day: zod.number(),
+      date: zod.coerce.date(),
+      topics: zod.array(zod.string()),
+      estimatedHours: zod.number(),
+      focus: zod.string(),
+      objectives: zod.array(zod.string()),
+    }),
+  ),
+  revisionSchedule: zod.array(
+    zod.object({
+      date: zod.coerce.date(),
+      topics: zod.array(zod.string()),
+      type: zod.enum(["quick", "comprehensive", "practice"]),
+    }),
+  ),
+  tips: zod.array(zod.string()),
+  milestones: zod.array(zod.string()),
+});
+
+/**
  * @summary Upload and parse a PDF syllabus document
  */
 export const UploadPdfBody = zod.object({
-  file: zod.any(),
+  file: zod.instanceof(File),
   examType: zod.string(),
 });
 

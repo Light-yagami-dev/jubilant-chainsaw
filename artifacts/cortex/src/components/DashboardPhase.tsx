@@ -5,6 +5,7 @@ import {
   useGetMasteryStats,
   useGetRevisionQueue,
   useCompleteRevision,
+  useGenerateStudyPlan,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetRevisionQueueQueryKey } from "@workspace/api-client-react";
@@ -307,6 +308,178 @@ function RevisionPanel() {
   );
 }
 
+function StudyPlanPanel() {
+  const { params } = useAppStore();
+  const [duration, setDuration] = useState(30);
+  const [dailyHours, setDailyHours] = useState(4);
+  const [currentLevel, setCurrentLevel] = useState<"beginner" | "intermediate" | "advanced">("beginner");
+  const [weakTopics, setWeakTopics] = useState("");
+  const [examDate, setExamDate] = useState("2026-06-04");
+
+  const studyPlanMutation = useGenerateStudyPlan({
+    mutation: {
+      onError: () => {
+        // handled by mutation state
+      },
+    },
+  });
+
+  const plan = studyPlanMutation.data;
+
+  function handleCreatePlan() {
+    studyPlanMutation.mutate({
+      data: {
+        subject: "B.Sc. Biotechnology",
+        examType: "BSC_BIOTECH_PART1",
+        duration,
+        dailyHours,
+        currentLevel,
+        weakTopics: weakTopics
+          .split(",")
+          .map((topic) => topic.trim())
+          .filter(Boolean),
+        examDate,
+      },
+    });
+  }
+
+  return (
+    <div className="glass p-5 space-y-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <p className="text-xs font-mono text-muted uppercase tracking-widest">Study Plan Generator</p>
+          <h3 className="text-lg font-semibold text-text">B.Sc. Biotechnology Prep</h3>
+          <p className="text-xs text-muted mt-1">Generate a personalized plan for the upcoming exam.</p>
+        </div>
+        <span className="tag">Exam: BSC_BIOTECH_PART1</span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <label className="space-y-1 text-xs text-muted">
+          Duration (days)
+          <input
+            type="number"
+            value={duration}
+            min={7}
+            max={120}
+            onChange={(e) => setDuration(Number(e.target.value))}
+            className="input w-full"
+          />
+        </label>
+        <label className="space-y-1 text-xs text-muted">
+          Daily hours
+          <input
+            type="number"
+            value={dailyHours}
+            min={1}
+            max={12}
+            onChange={(e) => setDailyHours(Number(e.target.value))}
+            className="input w-full"
+          />
+        </label>
+        <label className="space-y-1 text-xs text-muted">
+          Current level
+          <select
+            value={currentLevel}
+            onChange={(e) => setCurrentLevel(e.target.value as any)}
+            className="input w-full"
+          >
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </label>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label className="space-y-1 text-xs text-muted">
+          Weak topics (comma-separated)
+          <input
+            type="text"
+            value={weakTopics}
+            placeholder="e.g. Enzymes, Cell Division"
+            onChange={(e) => setWeakTopics(e.target.value)}
+            className="input w-full"
+          />
+        </label>
+        <label className="space-y-1 text-xs text-muted">
+          Exam date
+          <input
+            type="date"
+            value={examDate}
+            onChange={(e) => setExamDate(e.target.value)}
+            className="input w-full"
+          />
+        </label>
+      </div>
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <p className="text-xs text-muted">Current exam selection: {params.target_exam}</p>
+        <button
+          onClick={handleCreatePlan}
+          disabled={studyPlanMutation.status === "pending"}
+          className="btn-primary"
+        >
+          {studyPlanMutation.status === "pending" ? "Generating…" : "Create Study Plan"}
+        </button>
+      </div>
+
+      {studyPlanMutation.isError && (
+        <p className="text-xs text-red-400">Unable to generate study plan — please try again.</p>
+      )}
+
+      {plan && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-[hsl(var(--border-c))] p-4 bg-white/5">
+            <p className="text-xs font-mono text-muted uppercase tracking-widest">Plan Summary</p>
+            <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
+              <div className="space-y-1">
+                <p className="text-muted text-[11px]">Subject</p>
+                <p className="font-semibold">{plan.subject}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-muted text-[11px]">Duration</p>
+                <p className="font-semibold">{plan.duration} days</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-muted text-[11px]">Daily target</p>
+                <p className="font-semibold">{Math.ceil(plan.totalTopics / plan.duration)} topics/day</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-muted text-[11px]">Revision sessions</p>
+                <p className="font-semibold">{plan.revisionSchedule.length}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {plan.studyPlan.slice(0, 3).map((day) => (
+              <div key={`${day.week}-${day.day}`} className="rounded-2xl border border-[hsl(var(--border-c))] p-4 bg-white/5">
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <p className="text-sm font-semibold">Week {day.week} · Day {day.day}</p>
+                  <span className="text-[11px] text-muted">{day.date}</span>
+                </div>
+                <p className="text-xs text-muted mb-2">Focus: {day.focus}</p>
+                <div className="grid grid-cols-1 gap-2 text-xs">
+                  <p className="font-semibold">Topics</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    {day.topics.map((topic) => (
+                      <li key={topic}>{topic}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+            {plan.studyPlan.length > 3 && (
+              <p className="text-xs text-muted">Showing first 3 days of the plan. Scroll for more in the response object.</p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface HistoryPanelProps {
   onReplay: (query: string) => void;
 }
@@ -368,6 +541,7 @@ export default function DashboardPhase({ onReplay }: { onReplay: (query: string)
 
       <MasteryPanel />
       <RevisionPanel />
+      <StudyPlanPanel />
 
       <HistoryPanel onReplay={onReplay} />
 

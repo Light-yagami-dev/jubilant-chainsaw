@@ -14,6 +14,10 @@ tags:
     description: Gemini AI chat and image operations
   - name: tutor
     description: AI tutor adversarial workflow
+  - name: explain
+    description: Topic explanation and learning content
+  - name: study-plan
+    description: Personalized study plan generation
   - name: ingest
     description: Document ingestion
   - name: tts
@@ -239,6 +243,56 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TutorResponse"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+
+  /explain/topic:
+    post:
+      operationId: explainTopic
+      tags: [explain]
+      summary: Get detailed explanation for a specific topic
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExplainTopicBody"
+      responses:
+        "200":
+          description: Topic explanation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExplainTopicResponse"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+
+  /study-plan:
+    post:
+      operationId: generateStudyPlan
+      tags: [study-plan]
+      summary: Generate a personalized study plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudyPlanRequest"
+      responses:
+        "200":
+          description: Study plan output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudyPlanResponse"
         "500":
           description: Error
           content:
@@ -825,3 +879,148 @@ components:
       required:
         - evaluation
         - score
+
+    ExplainTopicBody:
+      type: object
+      properties:
+        topic:
+          type: string
+        subject:
+          type: string
+        examType:
+          type: string
+        depth:
+          type: string
+          enum: [basic, detailed, exam-focused]
+      required:
+        - topic
+
+    ExplainTopicResponse:
+      type: object
+      properties:
+        topic:
+          type: string
+        explanation:
+          type: string
+        keyPoints:
+          type: array
+          items:
+            type: string
+        relatedTopics:
+          type: array
+          items:
+            type: string
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+      required:
+        - topic
+        - explanation
+        - keyPoints
+        - relatedTopics
+        - difficulty
+
+    StudyPlanRequest:
+      type: object
+      properties:
+        subject:
+          type: string
+        examType:
+          type: string
+        duration:
+          type: integer
+        dailyHours:
+          type: integer
+        currentLevel:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        weakTopics:
+          type: array
+          items:
+            type: string
+        examDate:
+          type: string
+          format: date
+      required:
+        - duration
+        - dailyHours
+
+    StudyPlanResponse:
+      type: object
+      properties:
+        subject:
+          type: string
+        duration:
+          type: integer
+        dailyHours:
+          type: integer
+        totalTopics:
+          type: integer
+        studyPlan:
+          type: array
+          items:
+            type: object
+            properties:
+              week:
+                type: integer
+              day:
+                type: integer
+              date:
+                type: string
+                format: date
+              topics:
+                type: array
+                items:
+                  type: string
+              estimatedHours:
+                type: number
+              focus:
+                type: string
+              objectives:
+                type: array
+                items:
+                  type: string
+            required:
+              - week
+              - day
+              - date
+              - topics
+              - estimatedHours
+              - focus
+              - objectives
+        revisionSchedule:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              topics:
+                type: array
+                items:
+                  type: string
+              type:
+                type: string
+                enum: [quick, comprehensive, practice]
+            required:
+              - date
+              - topics
+              - type
+        tips:
+          type: array
+          items:
+            type: string
+        milestones:
+          type: array
+          items:
+            type: string
+      required:
+        - subject
+        - duration
+        - dailyHours
+        - totalTopics
+        - studyPlan
+        - revisionSchedule
+        - tips
+        - milestones
