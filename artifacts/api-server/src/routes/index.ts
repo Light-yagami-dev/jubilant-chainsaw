@@ -6,6 +6,7 @@ import masteryRouter from "./mastery";
 import revisionRouter from "./revision";
 import ttsRouter from "./tts";
 import ingestRouter from "./ingest";
+import explainRouter from "./explain";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use("/mastery", masteryRouter);
 router.use("/revision", revisionRouter);
 router.use("/tts", ttsRouter);
 router.use("/ingest", ingestRouter);
+router.use("/explain", explainRouter);
 
 export default router;
