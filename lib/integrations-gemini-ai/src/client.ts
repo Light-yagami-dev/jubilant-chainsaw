@@ -96,6 +96,8 @@ async function* openRouterGenerateContentStream(props: any): AsyncGenerator<{ te
   const decoder = new TextDecoder("utf-8");
   let buffer = "";
 
+  let hasYielded = false;
+
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -112,8 +114,10 @@ async function* openRouterGenerateContentStream(props: any): AsyncGenerator<{ te
       try {
         const chunk = JSON.parse(payload);
         const delta = chunk?.choices?.[0]?.delta;
-        if (delta?.content) {
-          yield { text: delta.content };
+        const text = delta?.content ?? chunk?.choices?.[0]?.message?.content ?? chunk?.choices?.[0]?.text;
+        if (text) {
+          hasYielded = true;
+          yield { text };
         }
       } catch {
         continue;
@@ -127,11 +131,20 @@ async function* openRouterGenerateContentStream(props: any): AsyncGenerator<{ te
       try {
         const chunk = JSON.parse(payload);
         const delta = chunk?.choices?.[0]?.delta;
-        if (delta?.content) {
-          yield { text: delta.content };
+        const text = delta?.content ?? chunk?.choices?.[0]?.message?.content ?? chunk?.choices?.[0]?.text;
+        if (text) {
+          hasYielded = true;
+          yield { text };
         }
       } catch {
       }
+    }
+  }
+
+  if (!hasYielded) {
+    const fallback = await openRouterGenerateContent(props);
+    if (fallback.text) {
+      yield { text: fallback.text };
     }
   }
 }
