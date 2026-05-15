@@ -107,6 +107,7 @@ Return as JSON array of chunks:
   }
 ]
 
+Use emojis like ✅, 💡, or 🔥 only when they help make the topic labels more engaging.
 Extract up to 15 meaningful topics. Focus on key exam topics.`;
 
     const response = await ai.models.generateContent({

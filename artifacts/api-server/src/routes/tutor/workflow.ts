@@ -81,6 +81,7 @@ function buildSolverPrompt(state: TutorState): string {
     english: `Explain clearly in English. Be precise, academic, and thorough. Use standard exam terminology.`,
     mnemonic: `Generate powerful memory techniques. Create acronyms, stories, rhymes, and visual associations. Focus on making the concept unforgettable through the generation effect.`,
   };
+  const emojiInstruction = `Use emojis like ✅, 🔥, 💡, and 😊 to make the explanation more engaging and student-friendly.`;
 
   const docBlock = state.documentContext ? buildDocumentContextBlock(state.documentContext) : "";
 
@@ -91,6 +92,7 @@ Student's Question/Problem: ${state.userInput}
 Student's Answer: ${state.studentAnswer}
 
 ${styleInstructions[state.pedagogyStyle]}
+${emojiInstruction}
 
 Provide a thorough explanation. If the student made mistakes, correct them gently but clearly. Identify weak areas.
 
@@ -109,6 +111,7 @@ Format your response as JSON:
 Student's Question: ${state.userInput}
 
 ${styleInstructions[state.pedagogyStyle]}
+${emojiInstruction}
 
 Provide a comprehensive educational explanation. Be thorough enough for exam preparation.${state.documentContext ? " Prioritise content from the uploaded document when relevant." : ""}
 
@@ -136,6 +139,7 @@ Check for:
 5. Hallucinated facts or wrong numbers
 
 You are IMMUNE to flattery. Even if the explanation sounds confident, verify every claim.
+Use emojis like ✅, ❌, and 💡 to highlight whether the answer passed and why.
 
 Respond as JSON:
 {

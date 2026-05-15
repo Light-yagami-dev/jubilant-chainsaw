@@ -24,7 +24,7 @@ Based on the following tutoring content, generate 5 practice problems:
 Content:
 ${context}
 
-Format each question clearly with labels Q1, Q2… Use markdown.`;
+Format each question clearly with labels Q1, Q2… Use markdown. Use emojis like ✅, 💡, and 🔥 to make the problems more engaging.`;
 
   const response = await ai.models.generateContent({
     model,

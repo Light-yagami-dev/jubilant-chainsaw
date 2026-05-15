@@ -39,7 +39,7 @@ Perform a trace-back evaluation:
 4. **Corrective Guidance** — Provide targeted corrections with examples.
 5. **Score** — Give a score out of 10 with justification.
 
-Use markdown formatting. Always end with a line like: **Score: X/10**`;
+Use markdown formatting. Use emojis like ✅, ❌, and 💡 to mark correct reasoning, errors, and guidance. Always end with a line like: **Score: X/10**`;
 
   const response = await ai.models.generateContent({
     model,

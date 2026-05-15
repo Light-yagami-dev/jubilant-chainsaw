@@ -35,9 +35,15 @@ Create a `.env` file in the project root (or set them in your shell):
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/cortex
 SESSION_SECRET=your-random-secret-here
+# Use OpenRouter if available; otherwise Gemini will be used.
+OPENROUTER_API_KEY=your-openrouter-api-key-here
+OPENROUTER_BASE_URL=https://openrouter.ai
+OPENROUTER_MODEL=gpt-4o-mini
 AI_INTEGRATIONS_GEMINI_BASE_URL=https://generativelanguage.googleapis.com
 AI_INTEGRATIONS_GEMINI_API_KEY=your-gemini-api-key-here
 ```
+
+If `OPENROUTER_API_KEY` is set, the app will route AI requests through OpenRouter and can use free local or community models supported by that key.
 
 Get a free Gemini API key at: https://aistudio.google.com/app/apikey
 
