@@ -32,6 +32,7 @@ import type {
   GeneratePracticeBody,
   GetMasteryMapParams,
   GetMasteryStatsParams,
+  GetProgressOverviewParams,
   GetProgressSummaryParams,
   GetRevisionQueueParams,
   HealthStatus,
@@ -39,10 +40,23 @@ import type {
   MasteryEntry,
   MasteryStats,
   PracticeResponse,
+  ProgressLogRequest,
+  ProgressStreakResponse,
   ProgressSummaryResponse,
+  Quiz,
+  QuizAnswerRequest,
+  QuizAnswerResponse,
+  QuizDetailResponse,
+  QuizGenerateRequest,
+  QuizGenerateResponse,
+  QuizSessionCompleteRequest,
+  QuizSessionCompleteResponse,
+  QuizSessionStartRequest,
+  QuizSessionStartResponse,
   RevisionEntry,
   RunDiagnosticBody,
   SendGeminiMessageBody,
+  StudyActivity,
   StudyPlanRequest,
   StudyPlanResponse,
   SynthesizeSpeechBody,
@@ -1169,7 +1183,9 @@ export const useGenerateStudyPlan = <
 /**
  * @summary Get the current learning progress summary
  */
-export const getGetProgressSummaryUrl = (params?: GetProgressSummaryParams) => {
+export const getGetProgressOverviewUrl = (
+  params?: GetProgressOverviewParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -1183,6 +1199,107 @@ export const getGetProgressSummaryUrl = (params?: GetProgressSummaryParams) => {
   return stringifiedParams.length > 0
     ? `/api/progress?${stringifiedParams}`
     : `/api/progress`;
+};
+
+export const getProgressOverview = async (
+  params?: GetProgressOverviewParams,
+  options?: RequestInit,
+): Promise<ProgressSummaryResponse> => {
+  return customFetch<ProgressSummaryResponse>(
+    getGetProgressOverviewUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetProgressOverviewQueryKey = (
+  params?: GetProgressOverviewParams,
+) => {
+  return [`/api/progress`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetProgressOverviewQueryOptions = <
+  TData = Awaited<ReturnType<typeof getProgressOverview>>,
+  TError = ErrorType<GeminiError>,
+>(
+  params?: GetProgressOverviewParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getProgressOverview>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetProgressOverviewQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getProgressOverview>>
+  > = ({ signal }) =>
+    getProgressOverview(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getProgressOverview>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetProgressOverviewQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getProgressOverview>>
+>;
+export type GetProgressOverviewQueryError = ErrorType<GeminiError>;
+
+/**
+ * @summary Get the current learning progress summary
+ */
+
+export function useGetProgressOverview<
+  TData = Awaited<ReturnType<typeof getProgressOverview>>,
+  TError = ErrorType<GeminiError>,
+>(
+  params?: GetProgressOverviewParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getProgressOverview>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetProgressOverviewQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get the current learning progress summary
+ */
+export const getGetProgressSummaryUrl = (params?: GetProgressSummaryParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/progress/summary?${stringifiedParams}`
+    : `/api/progress/summary`;
 };
 
 export const getProgressSummary = async (
@@ -1201,7 +1318,7 @@ export const getProgressSummary = async (
 export const getGetProgressSummaryQueryKey = (
   params?: GetProgressSummaryParams,
 ) => {
-  return [`/api/progress`, ...(params ? [params] : [])] as const;
+  return [`/api/progress/summary`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetProgressSummaryQueryOptions = <
@@ -1265,6 +1382,678 @@ export function useGetProgressSummary<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Get study streak and activity day data
+ */
+export const getGetProgressStreaksUrl = () => {
+  return `/api/progress/streaks`;
+};
+
+export const getProgressStreaks = async (
+  options?: RequestInit,
+): Promise<ProgressStreakResponse> => {
+  return customFetch<ProgressStreakResponse>(getGetProgressStreaksUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetProgressStreaksQueryKey = () => {
+  return [`/api/progress/streaks`] as const;
+};
+
+export const getGetProgressStreaksQueryOptions = <
+  TData = Awaited<ReturnType<typeof getProgressStreaks>>,
+  TError = ErrorType<GeminiError>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getProgressStreaks>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetProgressStreaksQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getProgressStreaks>>
+  > = ({ signal }) => getProgressStreaks({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getProgressStreaks>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetProgressStreaksQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getProgressStreaks>>
+>;
+export type GetProgressStreaksQueryError = ErrorType<GeminiError>;
+
+/**
+ * @summary Get study streak and activity day data
+ */
+
+export function useGetProgressStreaks<
+  TData = Awaited<ReturnType<typeof getProgressStreaks>>,
+  TError = ErrorType<GeminiError>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getProgressStreaks>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetProgressStreaksQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Log a study activity session
+ */
+export const getLogStudyActivityUrl = () => {
+  return `/api/progress/log`;
+};
+
+export const logStudyActivity = async (
+  progressLogRequest: ProgressLogRequest,
+  options?: RequestInit,
+): Promise<StudyActivity> => {
+  return customFetch<StudyActivity>(getLogStudyActivityUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(progressLogRequest),
+  });
+};
+
+export const getLogStudyActivityMutationOptions = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logStudyActivity>>,
+    TError,
+    { data: BodyType<ProgressLogRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof logStudyActivity>>,
+  TError,
+  { data: BodyType<ProgressLogRequest> },
+  TContext
+> => {
+  const mutationKey = ["logStudyActivity"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof logStudyActivity>>,
+    { data: BodyType<ProgressLogRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return logStudyActivity(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LogStudyActivityMutationResult = NonNullable<
+  Awaited<ReturnType<typeof logStudyActivity>>
+>;
+export type LogStudyActivityMutationBody = BodyType<ProgressLogRequest>;
+export type LogStudyActivityMutationError = ErrorType<GeminiError>;
+
+/**
+ * @summary Log a study activity session
+ */
+export const useLogStudyActivity = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logStudyActivity>>,
+    TError,
+    { data: BodyType<ProgressLogRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof logStudyActivity>>,
+  TError,
+  { data: BodyType<ProgressLogRequest> },
+  TContext
+> => {
+  return useMutation(getLogStudyActivityMutationOptions(options));
+};
+
+/**
+ * @summary List available quizzes
+ */
+export const getListQuizzesUrl = () => {
+  return `/api/quiz`;
+};
+
+export const listQuizzes = async (options?: RequestInit): Promise<Quiz[]> => {
+  return customFetch<Quiz[]>(getListQuizzesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListQuizzesQueryKey = () => {
+  return [`/api/quiz`] as const;
+};
+
+export const getListQuizzesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listQuizzes>>,
+  TError = ErrorType<GeminiError>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listQuizzes>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListQuizzesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listQuizzes>>> = ({
+    signal,
+  }) => listQuizzes({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listQuizzes>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListQuizzesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listQuizzes>>
+>;
+export type ListQuizzesQueryError = ErrorType<GeminiError>;
+
+/**
+ * @summary List available quizzes
+ */
+
+export function useListQuizzes<
+  TData = Awaited<ReturnType<typeof listQuizzes>>,
+  TError = ErrorType<GeminiError>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listQuizzes>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListQuizzesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Generate a new quiz from syllabus topics
+ */
+export const getGenerateQuizUrl = () => {
+  return `/api/quiz/generate`;
+};
+
+export const generateQuiz = async (
+  quizGenerateRequest: QuizGenerateRequest,
+  options?: RequestInit,
+): Promise<QuizGenerateResponse> => {
+  return customFetch<QuizGenerateResponse>(getGenerateQuizUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(quizGenerateRequest),
+  });
+};
+
+export const getGenerateQuizMutationOptions = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateQuiz>>,
+    TError,
+    { data: BodyType<QuizGenerateRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateQuiz>>,
+  TError,
+  { data: BodyType<QuizGenerateRequest> },
+  TContext
+> => {
+  const mutationKey = ["generateQuiz"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateQuiz>>,
+    { data: BodyType<QuizGenerateRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateQuiz(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateQuizMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateQuiz>>
+>;
+export type GenerateQuizMutationBody = BodyType<QuizGenerateRequest>;
+export type GenerateQuizMutationError = ErrorType<GeminiError>;
+
+/**
+ * @summary Generate a new quiz from syllabus topics
+ */
+export const useGenerateQuiz = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateQuiz>>,
+    TError,
+    { data: BodyType<QuizGenerateRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateQuiz>>,
+  TError,
+  { data: BodyType<QuizGenerateRequest> },
+  TContext
+> => {
+  return useMutation(getGenerateQuizMutationOptions(options));
+};
+
+/**
+ * @summary Get quiz details with questions
+ */
+export const getGetQuizByIdUrl = (id: number) => {
+  return `/api/quiz/${id}`;
+};
+
+export const getQuizById = async (
+  id: number,
+  options?: RequestInit,
+): Promise<QuizDetailResponse> => {
+  return customFetch<QuizDetailResponse>(getGetQuizByIdUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetQuizByIdQueryKey = (id: number) => {
+  return [`/api/quiz/${id}`] as const;
+};
+
+export const getGetQuizByIdQueryOptions = <
+  TData = Awaited<ReturnType<typeof getQuizById>>,
+  TError = ErrorType<GeminiError>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getQuizById>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetQuizByIdQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizById>>> = ({
+    signal,
+  }) => getQuizById(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getQuizById>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetQuizByIdQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getQuizById>>
+>;
+export type GetQuizByIdQueryError = ErrorType<GeminiError>;
+
+/**
+ * @summary Get quiz details with questions
+ */
+
+export function useGetQuizById<
+  TData = Awaited<ReturnType<typeof getQuizById>>,
+  TError = ErrorType<GeminiError>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getQuizById>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetQuizByIdQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Start a new quiz session
+ */
+export const getStartQuizSessionUrl = (id: number) => {
+  return `/api/quiz/${id}/start`;
+};
+
+export const startQuizSession = async (
+  id: number,
+  quizSessionStartRequest?: QuizSessionStartRequest,
+  options?: RequestInit,
+): Promise<QuizSessionStartResponse> => {
+  return customFetch<QuizSessionStartResponse>(getStartQuizSessionUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(quizSessionStartRequest),
+  });
+};
+
+export const getStartQuizSessionMutationOptions = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof startQuizSession>>,
+    TError,
+    { id: number; data: BodyType<QuizSessionStartRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof startQuizSession>>,
+  TError,
+  { id: number; data: BodyType<QuizSessionStartRequest> },
+  TContext
+> => {
+  const mutationKey = ["startQuizSession"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof startQuizSession>>,
+    { id: number; data: BodyType<QuizSessionStartRequest> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return startQuizSession(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type StartQuizSessionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof startQuizSession>>
+>;
+export type StartQuizSessionMutationBody = BodyType<QuizSessionStartRequest>;
+export type StartQuizSessionMutationError = ErrorType<GeminiError>;
+
+/**
+ * @summary Start a new quiz session
+ */
+export const useStartQuizSession = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof startQuizSession>>,
+    TError,
+    { id: number; data: BodyType<QuizSessionStartRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof startQuizSession>>,
+  TError,
+  { id: number; data: BodyType<QuizSessionStartRequest> },
+  TContext
+> => {
+  return useMutation(getStartQuizSessionMutationOptions(options));
+};
+
+/**
+ * @summary Submit an answer for a quiz session
+ */
+export const getSubmitQuizAnswerUrl = (id: number) => {
+  return `/api/quiz/session/${id}/answer`;
+};
+
+export const submitQuizAnswer = async (
+  id: number,
+  quizAnswerRequest: QuizAnswerRequest,
+  options?: RequestInit,
+): Promise<QuizAnswerResponse> => {
+  return customFetch<QuizAnswerResponse>(getSubmitQuizAnswerUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(quizAnswerRequest),
+  });
+};
+
+export const getSubmitQuizAnswerMutationOptions = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitQuizAnswer>>,
+    TError,
+    { id: number; data: BodyType<QuizAnswerRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitQuizAnswer>>,
+  TError,
+  { id: number; data: BodyType<QuizAnswerRequest> },
+  TContext
+> => {
+  const mutationKey = ["submitQuizAnswer"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitQuizAnswer>>,
+    { id: number; data: BodyType<QuizAnswerRequest> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return submitQuizAnswer(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitQuizAnswerMutationResult = NonNullable<
+  Awaited<ReturnType<typeof submitQuizAnswer>>
+>;
+export type SubmitQuizAnswerMutationBody = BodyType<QuizAnswerRequest>;
+export type SubmitQuizAnswerMutationError = ErrorType<GeminiError>;
+
+/**
+ * @summary Submit an answer for a quiz session
+ */
+export const useSubmitQuizAnswer = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitQuizAnswer>>,
+    TError,
+    { id: number; data: BodyType<QuizAnswerRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof submitQuizAnswer>>,
+  TError,
+  { id: number; data: BodyType<QuizAnswerRequest> },
+  TContext
+> => {
+  return useMutation(getSubmitQuizAnswerMutationOptions(options));
+};
+
+/**
+ * @summary Complete a quiz session and return results
+ */
+export const getCompleteQuizSessionUrl = (id: number) => {
+  return `/api/quiz/session/${id}/complete`;
+};
+
+export const completeQuizSession = async (
+  id: number,
+  quizSessionCompleteRequest?: QuizSessionCompleteRequest,
+  options?: RequestInit,
+): Promise<QuizSessionCompleteResponse> => {
+  return customFetch<QuizSessionCompleteResponse>(
+    getCompleteQuizSessionUrl(id),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(quizSessionCompleteRequest),
+    },
+  );
+};
+
+export const getCompleteQuizSessionMutationOptions = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof completeQuizSession>>,
+    TError,
+    { id: number; data: BodyType<QuizSessionCompleteRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof completeQuizSession>>,
+  TError,
+  { id: number; data: BodyType<QuizSessionCompleteRequest> },
+  TContext
+> => {
+  const mutationKey = ["completeQuizSession"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof completeQuizSession>>,
+    { id: number; data: BodyType<QuizSessionCompleteRequest> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return completeQuizSession(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CompleteQuizSessionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof completeQuizSession>>
+>;
+export type CompleteQuizSessionMutationBody =
+  BodyType<QuizSessionCompleteRequest>;
+export type CompleteQuizSessionMutationError = ErrorType<GeminiError>;
+
+/**
+ * @summary Complete a quiz session and return results
+ */
+export const useCompleteQuizSession = <
+  TError = ErrorType<GeminiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof completeQuizSession>>,
+    TError,
+    { id: number; data: BodyType<QuizSessionCompleteRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof completeQuizSession>>,
+  TError,
+  { id: number; data: BodyType<QuizSessionCompleteRequest> },
+  TContext
+> => {
+  return useMutation(getCompleteQuizSessionMutationOptions(options));
+};
 
 /**
  * @summary Upload and parse a PDF syllabus document

@@ -152,8 +152,152 @@ export interface ProgressSummaryResponse {
   revisionDue: number;
   revisionUpcoming: number;
   streakDays: number;
+  studyHours?: number;
+  activeDays?: number;
   recentActivity: string;
   recommendedNextSteps: string[];
+}
+
+export interface ProgressStreakResponse {
+  currentStreak: number;
+  longestStreak: number;
+  activityDays: string[];
+}
+
+export interface ProgressLogRequest {
+  activityType: string;
+  subject?: string;
+  examType?: string;
+  durationMinutes?: number;
+  notes?: string;
+}
+
+export interface StudyActivity {
+  id: number;
+  activityType: string;
+  subject?: string;
+  examType?: string;
+  durationMinutes: number;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface QuizQuestion {
+  id: number;
+  questionType: string;
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  explanation?: string;
+  topic?: string;
+}
+
+export type QuizMetadata = { [key: string]: unknown };
+
+export interface Quiz {
+  id: number;
+  title: string;
+  subject: string;
+  examType: string;
+  difficulty: string;
+  questionCount: number;
+  metadata: QuizMetadata;
+  createdAt: string;
+}
+
+export type QuizGenerateRequestDifficulty =
+  (typeof QuizGenerateRequestDifficulty)[keyof typeof QuizGenerateRequestDifficulty];
+
+export const QuizGenerateRequestDifficulty = {
+  easy: "easy",
+  medium: "medium",
+  hard: "hard",
+} as const;
+
+export type QuizGenerateRequestQuestionTypesItem =
+  (typeof QuizGenerateRequestQuestionTypesItem)[keyof typeof QuizGenerateRequestQuestionTypesItem];
+
+export const QuizGenerateRequestQuestionTypesItem = {
+  mcq: "mcq",
+  true_false: "true_false",
+  fill_blank: "fill_blank",
+  short_answer: "short_answer",
+} as const;
+
+export interface QuizGenerateRequest {
+  title?: string;
+  subject?: string;
+  examType: string;
+  difficulty: QuizGenerateRequestDifficulty;
+  questionCount: number;
+  questionTypes?: QuizGenerateRequestQuestionTypesItem[];
+  topics?: string[];
+}
+
+export interface QuizGenerateResponse {
+  quiz: Quiz;
+  questions: QuizQuestion[];
+}
+
+export interface QuizDetailResponse {
+  quiz: Quiz;
+  questions: QuizQuestion[];
+}
+
+export interface QuizSessionStartRequest {
+  timeLimitMinutes?: number;
+  userName?: string;
+}
+
+export interface QuizSessionStartResponse {
+  sessionId: number;
+  quizId: number;
+  startedAt: string;
+  maxScore: number;
+  timeLimitMinutes?: number;
+  userName?: string;
+}
+
+export interface QuizAnswerRequest {
+  questionId: number;
+  answer: string;
+}
+
+export interface QuizAnswerResponse {
+  questionId: number;
+  correct: boolean;
+  score: number;
+  maxScore: number;
+  answer: string;
+}
+
+export interface QuizSessionCompleteRequest {
+  timeSpentMinutes?: number;
+}
+
+export type QuizSessionCompleteResponseAnswersItem = {
+  questionId?: number;
+  answer?: string;
+  correct?: boolean;
+};
+
+export type QuizSessionCompleteResponseQuestionsItem = {
+  id?: number;
+  question?: string;
+  explanation?: string;
+  topic?: string;
+};
+
+export interface QuizSessionCompleteResponse {
+  sessionId: number;
+  quizId: number;
+  score: number;
+  maxScore: number;
+  correctCount: number;
+  totalQuestions: number;
+  completedAt: string;
+  answers: QuizSessionCompleteResponseAnswersItem[];
+  questions: QuizSessionCompleteResponseQuestionsItem[];
 }
 
 export interface RevisionEntry {
@@ -291,6 +435,11 @@ export interface StudyPlanResponse {
   tips: string[];
   milestones: string[];
 }
+
+export type GetProgressOverviewParams = {
+  examType?: string;
+  subject?: string;
+};
 
 export type GetProgressSummaryParams = {
   examType?: string;

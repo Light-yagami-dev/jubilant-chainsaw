@@ -234,6 +234,28 @@ export const GenerateStudyPlanResponse = zod.object({
 /**
  * @summary Get the current learning progress summary
  */
+export const GetProgressOverviewQueryParams = zod.object({
+  examType: zod.coerce.string().optional(),
+  subject: zod.coerce.string().optional(),
+});
+
+export const GetProgressOverviewResponse = zod.object({
+  totalTopics: zod.number(),
+  masteredTopics: zod.number(),
+  weakTopics: zod.number(),
+  averageScore: zod.number(),
+  revisionDue: zod.number(),
+  revisionUpcoming: zod.number(),
+  streakDays: zod.number(),
+  studyHours: zod.number().optional(),
+  activeDays: zod.number().optional(),
+  recentActivity: zod.string(),
+  recommendedNextSteps: zod.array(zod.string()),
+});
+
+/**
+ * @summary Get the current learning progress summary
+ */
 export const GetProgressSummaryQueryParams = zod.object({
   examType: zod.coerce.string().optional(),
   subject: zod.coerce.string().optional(),
@@ -247,8 +269,159 @@ export const GetProgressSummaryResponse = zod.object({
   revisionDue: zod.number(),
   revisionUpcoming: zod.number(),
   streakDays: zod.number(),
+  studyHours: zod.number().optional(),
+  activeDays: zod.number().optional(),
   recentActivity: zod.string(),
   recommendedNextSteps: zod.array(zod.string()),
+});
+
+/**
+ * @summary Get study streak and activity day data
+ */
+export const GetProgressStreaksResponse = zod.object({
+  currentStreak: zod.number(),
+  longestStreak: zod.number(),
+  activityDays: zod.array(zod.string()),
+});
+
+/**
+ * @summary Log a study activity session
+ */
+export const LogStudyActivityBody = zod.object({
+  activityType: zod.string(),
+  subject: zod.string().optional(),
+  examType: zod.string().optional(),
+  durationMinutes: zod.number().optional(),
+  notes: zod.string().optional(),
+});
+
+/**
+ * @summary List available quizzes
+ */
+export const ListQuizzesResponseItem = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  subject: zod.string(),
+  examType: zod.string(),
+  difficulty: zod.string(),
+  questionCount: zod.number(),
+  metadata: zod.record(zod.string(), zod.unknown()),
+  createdAt: zod.coerce.date(),
+});
+export const ListQuizzesResponse = zod.array(ListQuizzesResponseItem);
+
+/**
+ * @summary Generate a new quiz from syllabus topics
+ */
+export const GenerateQuizBody = zod.object({
+  title: zod.string().optional(),
+  subject: zod.string().optional(),
+  examType: zod.string(),
+  difficulty: zod.enum(["easy", "medium", "hard"]),
+  questionCount: zod.number(),
+  questionTypes: zod
+    .array(zod.enum(["mcq", "true_false", "fill_blank", "short_answer"]))
+    .optional(),
+  topics: zod.array(zod.string()).optional(),
+});
+
+/**
+ * @summary Get quiz details with questions
+ */
+export const GetQuizByIdParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetQuizByIdResponse = zod.object({
+  quiz: zod.object({
+    id: zod.number(),
+    title: zod.string(),
+    subject: zod.string(),
+    examType: zod.string(),
+    difficulty: zod.string(),
+    questionCount: zod.number(),
+    metadata: zod.record(zod.string(), zod.unknown()),
+    createdAt: zod.coerce.date(),
+  }),
+  questions: zod.array(
+    zod.object({
+      id: zod.number(),
+      questionType: zod.string(),
+      question: zod.string(),
+      options: zod.array(zod.string()),
+      correctAnswer: zod.string(),
+      explanation: zod.string().optional(),
+      topic: zod.string().optional(),
+    }),
+  ),
+});
+
+/**
+ * @summary Start a new quiz session
+ */
+export const StartQuizSessionParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const StartQuizSessionBody = zod.object({
+  timeLimitMinutes: zod.number().optional(),
+  userName: zod.string().optional(),
+});
+
+/**
+ * @summary Submit an answer for a quiz session
+ */
+export const SubmitQuizAnswerParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const SubmitQuizAnswerBody = zod.object({
+  questionId: zod.number(),
+  answer: zod.string(),
+});
+
+export const SubmitQuizAnswerResponse = zod.object({
+  questionId: zod.number(),
+  correct: zod.boolean(),
+  score: zod.number(),
+  maxScore: zod.number(),
+  answer: zod.string(),
+});
+
+/**
+ * @summary Complete a quiz session and return results
+ */
+export const CompleteQuizSessionParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const CompleteQuizSessionBody = zod.object({
+  timeSpentMinutes: zod.number().optional(),
+});
+
+export const CompleteQuizSessionResponse = zod.object({
+  sessionId: zod.number(),
+  quizId: zod.number(),
+  score: zod.number(),
+  maxScore: zod.number(),
+  correctCount: zod.number(),
+  totalQuestions: zod.number(),
+  completedAt: zod.coerce.date(),
+  answers: zod.array(
+    zod.object({
+      questionId: zod.number().optional(),
+      answer: zod.string().optional(),
+      correct: zod.boolean().optional(),
+    }),
+  ),
+  questions: zod.array(
+    zod.object({
+      id: zod.number().optional(),
+      question: zod.string().optional(),
+      explanation: zod.string().optional(),
+      topic: zod.string().optional(),
+    }),
+  ),
 });
 
 /**

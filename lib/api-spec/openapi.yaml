@@ -304,6 +304,34 @@ paths:
 
   /progress:
     get:
+      operationId: getProgressOverview
+      tags: [progress]
+      summary: Get the current learning progress summary
+      parameters:
+        - in: query
+          name: examType
+          schema:
+            type: string
+        - in: query
+          name: subject
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Progress summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressSummaryResponse"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+
+  /progress/summary:
+    get:
       operationId: getProgressSummary
       tags: [progress]
       summary: Get the current learning progress summary
@@ -325,6 +353,209 @@ paths:
                 $ref: "#/components/schemas/ProgressSummaryResponse"
         "500":
           description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+
+  /progress/streaks:
+    get:
+      operationId: getProgressStreaks
+      tags: [progress]
+      summary: Get study streak and activity day data
+      responses:
+        "200":
+          description: Progress streaks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressStreakResponse"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+
+  /progress/log:
+    post:
+      operationId: logStudyActivity
+      tags: [progress]
+      summary: Log a study activity session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProgressLogRequest"
+      responses:
+        "201":
+          description: Logged activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudyActivity"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+
+  /quiz:
+    get:
+      operationId: listQuizzes
+      tags: [quiz]
+      summary: List available quizzes
+      responses:
+        "200":
+          description: Quiz list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Quiz"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+  /quiz/generate:
+    post:
+      operationId: generateQuiz
+      tags: [quiz]
+      summary: Generate a new quiz from syllabus topics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizGenerateRequest"
+      responses:
+        "201":
+          description: Created quiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizGenerateResponse"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+  /quiz/{id}:
+    get:
+      operationId: getQuizById
+      tags: [quiz]
+      summary: Get quiz details with questions
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Quiz data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizDetailResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+  /quiz/{id}/start:
+    post:
+      operationId: startQuizSession
+      tags: [quiz]
+      summary: Start a new quiz session
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizSessionStartRequest"
+      responses:
+        "201":
+          description: Quiz session started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizSessionStartResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+  /quiz/session/{id}/answer:
+    post:
+      operationId: submitQuizAnswer
+      tags: [quiz]
+      summary: Submit an answer for a quiz session
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizAnswerRequest"
+      responses:
+        "200":
+          description: Answer recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizAnswerResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+  /quiz/session/{id}/complete:
+    post:
+      operationId: completeQuizSession
+      tags: [quiz]
+      summary: Complete a quiz session and return results
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizSessionCompleteRequest"
+      responses:
+        "200":
+          description: Completed quiz results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizSessionCompleteResponse"
+        "404":
+          description: Not found
           content:
             application/json:
               schema:
@@ -813,6 +1044,10 @@ components:
           type: integer
         streakDays:
           type: integer
+        studyHours:
+          type: number
+        activeDays:
+          type: integer
         recentActivity:
           type: string
         recommendedNextSteps:
@@ -829,6 +1064,293 @@ components:
         - streakDays
         - recentActivity
         - recommendedNextSteps
+
+    ProgressStreakResponse:
+      type: object
+      properties:
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+        activityDays:
+          type: array
+          items:
+            type: string
+      required:
+        - currentStreak
+        - longestStreak
+        - activityDays
+
+    ProgressLogRequest:
+      type: object
+      properties:
+        activityType:
+          type: string
+        subject:
+          type: string
+        examType:
+          type: string
+        durationMinutes:
+          type: integer
+        notes:
+          type: string
+      required:
+        - activityType
+
+    StudyActivity:
+      type: object
+      properties:
+        id:
+          type: integer
+        activityType:
+          type: string
+        subject:
+          type: string
+        examType:
+          type: string
+        durationMinutes:
+          type: integer
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - activityType
+        - durationMinutes
+        - createdAt
+
+    QuizQuestion:
+      type: object
+      properties:
+        id:
+          type: integer
+        questionType:
+          type: string
+        question:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        correctAnswer:
+          type: string
+        explanation:
+          type: string
+        topic:
+          type: string
+      required:
+        - id
+        - questionType
+        - question
+        - options
+        - correctAnswer
+
+    Quiz:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        subject:
+          type: string
+        examType:
+          type: string
+        difficulty:
+          type: string
+        questionCount:
+          type: integer
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - subject
+        - examType
+        - difficulty
+        - questionCount
+        - metadata
+        - createdAt
+
+    QuizGenerateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        subject:
+          type: string
+        examType:
+          type: string
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+        questionCount:
+          type: integer
+        questionTypes:
+          type: array
+          items:
+            type: string
+            enum: [mcq, true_false, fill_blank, short_answer]
+        topics:
+          type: array
+          items:
+            type: string
+      required:
+        - examType
+        - difficulty
+        - questionCount
+
+    QuizGenerateResponse:
+      type: object
+      properties:
+        quiz:
+          $ref: "#/components/schemas/Quiz"
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuizQuestion"
+      required:
+        - quiz
+        - questions
+
+    QuizDetailResponse:
+      type: object
+      properties:
+        quiz:
+          $ref: "#/components/schemas/Quiz"
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuizQuestion"
+      required:
+        - quiz
+        - questions
+
+    QuizSessionStartRequest:
+      type: object
+      properties:
+        timeLimitMinutes:
+          type: integer
+        userName:
+          type: string
+
+    QuizSessionStartResponse:
+      type: object
+      properties:
+        sessionId:
+          type: integer
+        quizId:
+          type: integer
+        startedAt:
+          type: string
+          format: date-time
+        maxScore:
+          type: integer
+        timeLimitMinutes:
+          type: integer
+        userName:
+          type: string
+      required:
+        - sessionId
+        - quizId
+        - startedAt
+        - maxScore
+
+    QuizAnswerRequest:
+      type: object
+      properties:
+        questionId:
+          type: integer
+        answer:
+          type: string
+      required:
+        - questionId
+        - answer
+
+    QuizAnswerResponse:
+      type: object
+      properties:
+        questionId:
+          type: integer
+        correct:
+          type: boolean
+        score:
+          type: integer
+        maxScore:
+          type: integer
+        answer:
+          type: string
+      required:
+        - questionId
+        - correct
+        - score
+        - maxScore
+        - answer
+
+    QuizSessionCompleteRequest:
+      type: object
+      properties:
+        timeSpentMinutes:
+          type: integer
+
+    QuizSessionCompleteResponse:
+      type: object
+      properties:
+        sessionId:
+          type: integer
+        quizId:
+          type: integer
+        score:
+          type: integer
+        maxScore:
+          type: integer
+        correctCount:
+          type: integer
+        totalQuestions:
+          type: integer
+        completedAt:
+          type: string
+          format: date-time
+        answers:
+          type: array
+          items:
+            type: object
+            properties:
+              questionId:
+                type: integer
+              answer:
+                type: string
+              correct:
+                type: boolean
+        questions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              question:
+                type: string
+              explanation:
+                type: string
+              topic:
+                type: string
+      required:
+        - sessionId
+        - quizId
+        - score
+        - maxScore
+        - correctCount
+        - totalQuestions
+        - completedAt
+        - answers
+        - questions
 
     RevisionEntry:
       type: object

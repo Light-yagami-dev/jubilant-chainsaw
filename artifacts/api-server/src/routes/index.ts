@@ -9,6 +9,7 @@ import ingestRouter from "./ingest";
 import explainRouter from "./explain";
 import studyPlanRouter from "./study-plan";
 import progressRouter from "./progress";
+import quizRouter from "./quiz";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use("/ingest", ingestRouter);
 router.use("/explain", explainRouter);
 router.use("/study-plan", studyPlanRouter);
 router.use("/progress", progressRouter);
+router.use("/quiz", quizRouter);
 
 export default router;
