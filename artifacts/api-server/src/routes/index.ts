@@ -8,6 +8,7 @@ import ttsRouter from "./tts";
 import ingestRouter from "./ingest";
 import explainRouter from "./explain";
 import studyPlanRouter from "./study-plan";
+import progressRouter from "./progress";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use("/tts", ttsRouter);
 router.use("/ingest", ingestRouter);
 router.use("/explain", explainRouter);
 router.use("/study-plan", studyPlanRouter);
+router.use("/progress", progressRouter);
 
 export default router;

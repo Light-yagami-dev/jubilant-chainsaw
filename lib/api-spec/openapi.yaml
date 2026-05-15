@@ -26,6 +26,8 @@ tags:
     description: Student mastery tracking
   - name: revision
     description: Spaced repetition revision queue
+  - name: progress
+    description: Learning progress summary and recommended next steps
 paths:
   /healthz:
     get:
@@ -293,6 +295,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StudyPlanResponse"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+
+  /progress:
+    get:
+      operationId: getProgressSummary
+      tags: [progress]
+      summary: Get the current learning progress summary
+      parameters:
+        - in: query
+          name: examType
+          schema:
+            type: string
+        - in: query
+          name: subject
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Progress summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressSummaryResponse"
         "500":
           description: Error
           content:
@@ -765,6 +795,40 @@ components:
         - totalTopics
         - masteredTopics
         - weakTopics
+
+    ProgressSummaryResponse:
+      type: object
+      properties:
+        totalTopics:
+          type: integer
+        masteredTopics:
+          type: integer
+        weakTopics:
+          type: integer
+        averageScore:
+          type: number
+        revisionDue:
+          type: integer
+        revisionUpcoming:
+          type: integer
+        streakDays:
+          type: integer
+        recentActivity:
+          type: string
+        recommendedNextSteps:
+          type: array
+          items:
+            type: string
+      required:
+        - totalTopics
+        - masteredTopics
+        - weakTopics
+        - averageScore
+        - revisionDue
+        - revisionUpcoming
+        - streakDays
+        - recentActivity
+        - recommendedNextSteps
 
     RevisionEntry:
       type: object

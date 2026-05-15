@@ -144,6 +144,18 @@ export interface MasteryStats {
   weakTopics: number;
 }
 
+export interface ProgressSummaryResponse {
+  totalTopics: number;
+  masteredTopics: number;
+  weakTopics: number;
+  averageScore: number;
+  revisionDue: number;
+  revisionUpcoming: number;
+  streakDays: number;
+  recentActivity: string;
+  recommendedNextSteps: string[];
+}
+
 export interface RevisionEntry {
   id: number;
   topic: string;
@@ -279,6 +291,11 @@ export interface StudyPlanResponse {
   tips: string[];
   milestones: string[];
 }
+
+export type GetProgressSummaryParams = {
+  examType?: string;
+  subject?: string;
+};
 
 export type UploadPdfBody = {
   file: Blob;

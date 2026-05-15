@@ -32,12 +32,14 @@ import type {
   GeneratePracticeBody,
   GetMasteryMapParams,
   GetMasteryStatsParams,
+  GetProgressSummaryParams,
   GetRevisionQueueParams,
   HealthStatus,
   InvokeTutorBody,
   MasteryEntry,
   MasteryStats,
   PracticeResponse,
+  ProgressSummaryResponse,
   RevisionEntry,
   RunDiagnosticBody,
   SendGeminiMessageBody,
@@ -1163,6 +1165,106 @@ export const useGenerateStudyPlan = <
 > => {
   return useMutation(getGenerateStudyPlanMutationOptions(options));
 };
+
+/**
+ * @summary Get the current learning progress summary
+ */
+export const getGetProgressSummaryUrl = (params?: GetProgressSummaryParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/progress?${stringifiedParams}`
+    : `/api/progress`;
+};
+
+export const getProgressSummary = async (
+  params?: GetProgressSummaryParams,
+  options?: RequestInit,
+): Promise<ProgressSummaryResponse> => {
+  return customFetch<ProgressSummaryResponse>(
+    getGetProgressSummaryUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetProgressSummaryQueryKey = (
+  params?: GetProgressSummaryParams,
+) => {
+  return [`/api/progress`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetProgressSummaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getProgressSummary>>,
+  TError = ErrorType<GeminiError>,
+>(
+  params?: GetProgressSummaryParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getProgressSummary>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetProgressSummaryQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getProgressSummary>>
+  > = ({ signal }) => getProgressSummary(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getProgressSummary>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetProgressSummaryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getProgressSummary>>
+>;
+export type GetProgressSummaryQueryError = ErrorType<GeminiError>;
+
+/**
+ * @summary Get the current learning progress summary
+ */
+
+export function useGetProgressSummary<
+  TData = Awaited<ReturnType<typeof getProgressSummary>>,
+  TError = ErrorType<GeminiError>,
+>(
+  params?: GetProgressSummaryParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getProgressSummary>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetProgressSummaryQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Upload and parse a PDF syllabus document

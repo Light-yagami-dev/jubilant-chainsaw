@@ -6,6 +6,7 @@ import {
   useGetRevisionQueue,
   useCompleteRevision,
   useGenerateStudyPlan,
+  useGetProgressSummary,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetRevisionQueueQueryKey } from "@workspace/api-client-react";
@@ -308,6 +309,52 @@ function RevisionPanel() {
   );
 }
 
+function ProgressPanel() {
+  const { data, isLoading } = useGetProgressSummary();
+
+  const cards = [
+    { label: "Total Topics", value: isLoading ? "—" : data?.totalTopics ?? 0, icon: "📚" },
+    { label: "Mastered", value: isLoading ? "—" : data?.masteredTopics ?? 0, icon: "✅" },
+    { label: "Weak", value: isLoading ? "—" : data?.weakTopics ?? 0, icon: "⚠️" },
+    { label: "Revision Due", value: isLoading ? "—" : data?.revisionDue ?? 0, icon: "⏰" },
+    { label: "Streak", value: isLoading ? "—" : `${data?.streakDays ?? 0}d`, icon: "🔥" },
+  ];
+
+  return (
+    <div className="glass p-5 space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-mono text-muted uppercase tracking-widest">Progress Summary</p>
+          <p className="text-sm font-semibold text-text">Current study momentum</p>
+        </div>
+        <span className="tag">Progress</span>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        {cards.map((card) => (
+          <div key={card.label} className="rounded-2xl border border-[hsl(var(--border-c))] p-3 text-center text-xs">
+            <div className="text-2xl mb-1">{card.icon}</div>
+            <div className="font-semibold text-text">{card.value}</div>
+            <div className="text-muted mt-1">{card.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-2xl border border-[hsl(var(--border-c))] p-4 bg-white/5">
+        <p className="text-xs text-muted uppercase tracking-widest mb-3">Insights</p>
+        <p className="text-sm text-text mb-3">
+          {isLoading ? "Loading progress insights…" : data?.recentActivity}
+        </p>
+        <ul className="list-disc list-inside space-y-1 text-xs text-muted">
+          {data?.recommendedNextSteps?.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 function StudyPlanPanel() {
   const { params } = useAppStore();
   const [duration, setDuration] = useState(30);
@@ -538,6 +585,7 @@ export default function DashboardPhase({ onReplay }: { onReplay: (query: string)
       </div>
 
       <StatCards />
+      <ProgressPanel />
 
       <MasteryPanel />
       <RevisionPanel />

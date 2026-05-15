@@ -232,6 +232,26 @@ export const GenerateStudyPlanResponse = zod.object({
 });
 
 /**
+ * @summary Get the current learning progress summary
+ */
+export const GetProgressSummaryQueryParams = zod.object({
+  examType: zod.coerce.string().optional(),
+  subject: zod.coerce.string().optional(),
+});
+
+export const GetProgressSummaryResponse = zod.object({
+  totalTopics: zod.number(),
+  masteredTopics: zod.number(),
+  weakTopics: zod.number(),
+  averageScore: zod.number(),
+  revisionDue: zod.number(),
+  revisionUpcoming: zod.number(),
+  streakDays: zod.number(),
+  recentActivity: zod.string(),
+  recommendedNextSteps: zod.array(zod.string()),
+});
+
+/**
  * @summary Upload and parse a PDF syllabus document
  */
 export const UploadPdfBody = zod.object({
